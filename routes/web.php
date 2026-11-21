@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Admin\GarageController;
 use App\Http\Controllers\Admin\RenterVerificationController;
+use App\Http\Controllers\Admin\RentalExtensionController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Renter\RentalController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,9 +31,20 @@ Route::middleware('auth')->group(function () {
         Route::get('/renters', [RenterVerificationController::class, 'index'])->name('renters.index');
         Route::patch('/renters/{user}/approve', [RenterVerificationController::class, 'approve'])->name('renters.approve');
         Route::patch('/renters/{user}/reject', [RenterVerificationController::class, 'reject'])->name('renters.reject');
+
+        Route::get('/rentals', [RentalExtensionController::class, 'index'])->name('rentals.index');
+        Route::get('/rentals/{rental}/extension-quote', [RentalExtensionController::class, 'quote'])->name('rentals.quote');
+        Route::post('/rentals/{rental}/extend', [RentalExtensionController::class, 'store'])->name('rentals.extend');
+
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     });
 
     Route::middleware('role:renter')->prefix('renter')->name('renter.')->group(function () {
         Route::view('/dashboard', 'renter.dashboard')->name('dashboard');
+
+        Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
+        Route::get('/rentals/create', [RentalController::class, 'create'])->name('rentals.create');
+        Route::get('/rentals/quote', [RentalController::class, 'quote'])->name('rentals.quote');
+        Route::post('/rentals', [RentalController::class, 'store'])->name('rentals.store');
     });
 });
