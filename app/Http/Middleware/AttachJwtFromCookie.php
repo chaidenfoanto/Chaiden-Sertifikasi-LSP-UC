@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -23,6 +24,12 @@ class AttachJwtFromCookie
 
         if (is_string($token) && $token !== '') {
             auth('api')->setToken($token);
+
+            // An expired, blacklisted, or otherwise invalid token must not
+            // linger in the browser, so remove its cookie on this response.
+            if (! auth('api')->check()) {
+                Cookie::queue(Cookie::forget('access_token'));
+            }
         }
 
         return $next($request);

@@ -13,11 +13,13 @@
                 <select id="group" name="group" class="form-select">
                     <option value="month" @selected($report['group'] === 'month')>Month</option>
                     <option value="day" @selected($report['group'] === 'day')>Day</option>
+                    <option value="type" @selected($report['group'] === 'type')>Garage type</option>
+                    <option value="renter" @selected($report['group'] === 'renter')>Renter</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <label for="year" class="form-label">Year</label>
-                <input type="number" id="year" name="year" value="{{ $report['year'] }}" min="2000" max="2100"
+                <input type="number" id="year" name="year" value="{{ $report['year'] }}" min="2000" max="2100" placeholder="All years"
                        class="form-control">
             </div>
             <div class="col-md-2" id="monthGroup">
@@ -65,12 +67,12 @@
         <div class="card shadow-sm">
             <div class="card-body p-4">
                 <h2 class="h6 mb-1">Summary</h2>
-                <p class="small text-muted">Rentals are counted on their start date. The total includes extensions.</p>
+                <p class="small text-muted">Rentals are counted on their start date. The total includes extensions. Type and renter reports cover all years when the year is empty.</p>
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <thead>
                             <tr>
-                                <th>{{ $report['group'] === 'month' ? 'Month' : 'Day' }}</th>
+                                <th>{{ ['month' => 'Month', 'day' => 'Day', 'type' => 'Garage type', 'renter' => 'Renter'][$report['group']] }}</th>
                                 <th class="text-end">Rentals</th>
                                 <th class="text-end">Revenue</th>
                             </tr>

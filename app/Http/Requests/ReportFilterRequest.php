@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\ReportService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,7 +27,7 @@ class ReportFilterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'group' => ['nullable', Rule::in(['month', 'day'])],
+            'group' => ['nullable', Rule::in(ReportService::GROUPS)],
             'year' => ['nullable', 'integer', 'between:2000,2100'],
             'month' => ['nullable', 'integer', 'between:1,12'],
             'garage_type_id' => ['nullable', 'exists:garage_types,id'],
