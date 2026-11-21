@@ -160,6 +160,9 @@ class RentalService
                     $rental->items()->create($this->itemAttributes($item));
                 }
 
+                // Assignment rule: a saved rental marks the garage as used.
+                $garage->update(['status' => Garage::STATUS_USED]);
+
                 return $rental->load(['garage', 'vehicle', 'items']);
             });
         } catch (Throwable $exception) {

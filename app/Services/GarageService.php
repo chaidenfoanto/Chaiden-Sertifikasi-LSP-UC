@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Garage;
 use App\Models\GarageType;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -75,6 +76,27 @@ class GarageService
 
             return $codes;
         });
+    }
+
+    /**
+     * Refresh the stored status of every garage from its rentals.
+     *
+     * A garage is "used" while it has a rental that has not ended yet
+     * (running or upcoming), otherwise it is "available" again.
+     */
+    public function syncStatuses(): void
+    {
+        $today = CarbonImmutable::today()->toDateString();
+
+        Garage::query()
+            ->whereHas('rentals', fn ($query) => $query->whereDate('end_date', '>=', $today))
+            ->where('status', '!=', Garage::STATUS_USED)
+            ->update(['status' => Garage::STATUS_USED]);
+
+        Garage::query()
+            ->whereDoesntHave('rentals', fn ($query) => $query->whereDate('end_date', '>=', $today))
+            ->where('status', '!=', Garage::STATUS_AVAILABLE)
+            ->update(['status' => Garage::STATUS_AVAILABLE]);
     }
 
     /**

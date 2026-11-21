@@ -86,6 +86,17 @@ class RentalServiceTest extends TestCase
         Storage::disk('public')->assertExists($rental->payment_proof_path);
     }
 
+    public function test_garage_status_becomes_used_after_a_rental_is_saved(): void
+    {
+        $this->makeGarages(GarageType::CAR, 1, 100000);
+
+        $this->assertSame('available', Garage::where('code', 'C001')->value('status'));
+
+        $this->service->create($this->renter, $this->payload('C001'), $this->proof());
+
+        $this->assertSame('used', Garage::where('code', 'C001')->value('status'));
+    }
+
     public function test_electric_car_in_electric_garage_pays_charging_cost(): void
     {
         $this->makeGarages(GarageType::ELECTRIC_CAR, 1, 150000, 2000);

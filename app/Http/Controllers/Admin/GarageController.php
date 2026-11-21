@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreGarageBatchRequest;
+use App\Models\Garage;
 use App\Models\GarageType;
 use App\Services\GarageService;
 use Illuminate\Http\RedirectResponse;
@@ -17,9 +18,15 @@ class GarageController extends Controller
     /**
      * Show the batch creation form and a summary per garage type.
      */
-    public function create(): View
+    public function create(GarageService $garageService): View
     {
-        $types = GarageType::withCount('garages')->orderBy('code')->get();
+        // Rentals end by themselves, so refresh the stored status before showing it.
+        $garageService->syncStatuses();
+
+        $types = GarageType::withCount([
+            'garages',
+            'garages as used_garages_count' => fn ($query) => $query->where('status', Garage::STATUS_USED),
+        ])->orderBy('code')->get();
 
         return view('admin.garages.create', compact('types'));
     }

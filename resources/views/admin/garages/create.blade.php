@@ -61,6 +61,7 @@
                             <tr>
                                 <th>Type</th>
                                 <th>Garages</th>
+                                <th>Used</th>
                                 <th>Daily</th>
                                 <th>Monthly</th>
                                 <th>Per kWh</th>
@@ -71,6 +72,7 @@
                                 <tr>
                                     <td>{{ ucwords(str_replace('_', ' ', $type->name)) }} ({{ $type->code }})</td>
                                     <td>{{ $type->garages_count }}</td>
+                                    <td>{{ $type->used_garages_count }}</td>
                                     <td>{{ $type->daily_price === null ? '-' : 'Rp ' . number_format($type->daily_price, 0, ',', '.') }}</td>
                                     <td>{{ $type->monthly_price === null ? '-' : 'Rp ' . number_format($type->monthly_price, 0, ',', '.') }}</td>
                                     <td>{{ $type->electricity_price_per_kwh === null ? '-' : 'Rp ' . number_format($type->electricity_price_per_kwh, 0, ',', '.') }}</td>

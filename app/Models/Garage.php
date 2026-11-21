@@ -12,10 +12,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Garage extends Model
 {
+    public const STATUS_AVAILABLE = 'available';
+    public const STATUS_USED = 'used';
+
     protected $fillable = [
         'garage_type_id',
         'sequence_number',
         'code',
+        'status',
     ];
 
     /**
@@ -35,7 +39,8 @@ class Garage extends Model
     }
 
     /**
-     * Determine whether the garage is "used" on the given day.
+     * Determine whether the garage is rented on the given day.
+     * This reads the rentals table, not the status column.
      */
     public function isUsedOn(CarbonInterface $date): bool
     {
