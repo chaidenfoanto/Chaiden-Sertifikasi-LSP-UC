@@ -170,6 +170,25 @@ class AuthFlowTest extends TestCase
             ->assertCookieExpired('access_token');
     }
 
+    public function test_logged_in_user_is_not_bounced_between_login_and_dashboard(): void
+    {
+        $renter = $this->makeUser();
+        $login = $this->post(route('login.store'), ['email' => $renter->email, 'password' => 'password123']);
+        $token = $login->getCookie('access_token', false)->getValue();
+
+        // The login page must send a logged in user to the dashboard.
+        $this->app['auth']->forgetGuards();
+        $this->withUnencryptedCookie('access_token', $token)
+            ->get(route('login'))
+            ->assertRedirect(route('renter.dashboard'));
+
+        // The dashboard must accept the same cookie instead of redirecting back.
+        $this->app['auth']->forgetGuards();
+        $this->withUnencryptedCookie('access_token', $token)
+            ->get(route('renter.dashboard'))
+            ->assertOk();
+    }
+
     public function test_guest_is_redirected_to_login_from_protected_pages(): void
     {
         $this->get(route('admin.dashboard'))->assertRedirect(route('login'));

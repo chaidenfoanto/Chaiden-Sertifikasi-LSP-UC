@@ -91,13 +91,12 @@
                         </div>
                         <div class="col-md-4">
                             <label for="start_date" class="form-label">Start date</label>
-                            <input type="date" id="start_date" name="start_date"
-                                   value="{{ old('start_date', now()->toDateString()) }}"
-                                   min="{{ now()->toDateString() }}" class="form-control" required>
+                            <input type="text" id="start_date" value="{{ now()->toDateString() }}"
+                                   class="form-control" readonly>
                         </div>
                         <div class="col-12">
                             <div class="form-text">
-                                A daily rental can be at most the days of its month minus 1. A longer rental is split
+                                A daily part can be at most the days of its month minus 1. A longer rental is split
                                 automatically into monthly and daily parts, and a monthly part costs 25 times the daily price.
                             </div>
                         </div>
@@ -120,6 +119,12 @@
                                 </thead>
                                 <tbody id="previewItems"></tbody>
                             </table>
+                        </div>
+                        <div class="mb-3">
+                            <label for="garage_type" class="form-label">Garage type</label>
+                            <select id="garage_type" name="garage_type" class="form-select" disabled>
+                                <option value="">Select a vehicle type first</option>
+                            </select>
                         </div>
                         <h3 class="h6 mt-3">Available garages</h3>
                         <div id="garageList" class="list-group"></div>
@@ -163,7 +168,6 @@
         const rentalType = byId('rental_type');
         const quantity = byId('quantity');
         const quantityLabel = byId('quantityLabel');
-        const startDate = byId('start_date');
         const previewMessage = byId('previewMessage');
         const previewContent = byId('previewContent');
         const previewDates = byId('previewDates');
@@ -171,6 +175,20 @@
         const garageList = byId('garageList');
         const totalCost = byId('totalCost');
         const submitButton = byId('submitButton');
+
+        const garageType = byId('garage_type');
+        const compatibleTypes = {
+            bicycle: ['bicycle'],
+            motorcycle: ['bicycle'],
+            car: ['car'],
+            electric_car: ['car', 'electric_car'],
+        };
+        const typeLabels = {
+            bicycle: 'Bicycle garage',
+            car: 'Car garage',
+            electric_car: 'Electric car garage',
+        };
+        let pendingGarageType = @json(old('garage_type'));
 
         let garages = [];
         let selectedGarageId = @json(old('garage_id'));
@@ -212,7 +230,6 @@
             params.set('vehicle_type', vehicleType.value);
             params.set('rental_type', rentalType.value);
             params.set('quantity', quantity.value);
-            if (startDate.value) params.set('start_date', startDate.value);
             if (isElectric()) {
                 if (batteryCapacity.value) params.set('battery_capacity_kwh', batteryCapacity.value);
                 if (batteryRemaining.value) params.set('remaining_battery_kwh', batteryRemaining.value);
@@ -220,8 +237,28 @@
             return params.toString();
         }
 
+        // Garages of the chosen garage type only.
+        function visibleGarages() {
+            return garages.filter((item) => item.type === garageType.value);
+        }
+
+        // Fill the garage type options with the types the vehicle may use.
+        function syncGarageTypes() {
+            const allowed = compatibleTypes[vehicleType.value] || [];
+            const previous = garageType.value || pendingGarageType || '';
+            pendingGarageType = null;
+
+            garageType.replaceChildren();
+            garageType.appendChild(new Option(allowed.length ? 'Select a garage type' : 'Select a vehicle type first', ''));
+            allowed.forEach((name) => garageType.appendChild(new Option(typeLabels[name], name)));
+            garageType.disabled = allowed.length === 0;
+
+            // A single compatible type is picked automatically.
+            garageType.value = allowed.includes(previous) ? previous : (allowed.length === 1 ? allowed[0] : '');
+        }
+
         function updateTotal() {
-            const garage = garages.find((item) => String(item.id) === String(selectedGarageId));
+            const garage = visibleGarages().find((item) => String(item.id) === String(selectedGarageId));
             totalCost.textContent = garage ? rupiah(garage.total) : '-';
             submitButton.disabled = ! garage;
         }
@@ -251,12 +288,21 @@
                 previewItems.appendChild(row);
             });
 
+            renderGarages();
+        }
+
+        // Show the available garages of the chosen garage type.
+        function renderGarages() {
             garageList.replaceChildren();
-            if (garages.length === 0) {
-                garageList.appendChild(el('div', 'text-muted small', 'No garage is available for these dates.'));
+            const visible = visibleGarages();
+
+            if (! garageType.value) {
+                garageList.appendChild(el('div', 'text-muted small', 'Choose a garage type to see the available garages.'));
+            } else if (visible.length === 0) {
+                garageList.appendChild(el('div', 'text-muted small', 'No garage of this type is available for these dates.'));
             }
 
-            garages.forEach((garage) => {
+            visible.forEach((garage) => {
                 const label = el('label', 'list-group-item d-flex align-items-center gap-3');
                 const radio = document.createElement('input');
                 radio.type = 'radio';
@@ -323,14 +369,21 @@
             timer = setTimeout(loadQuote, 300);
         }
 
-        [vehicleType, rentalType, quantity, startDate, batteryCapacity, batteryRemaining].forEach((field) => {
+        [vehicleType, rentalType, quantity, batteryCapacity, batteryRemaining].forEach((field) => {
             field.addEventListener('input', () => {
                 syncFields();
                 schedule();
             });
         });
 
+        vehicleType.addEventListener('input', () => {
+            syncGarageTypes();
+            renderGarages();
+        });
+        garageType.addEventListener('change', renderGarages);
+
         syncFields();
+        syncGarageTypes();
         loadQuote();
     })();
 </script>

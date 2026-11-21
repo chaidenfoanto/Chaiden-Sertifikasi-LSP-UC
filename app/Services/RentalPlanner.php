@@ -70,7 +70,7 @@ class RentalPlanner
 
         $remaining = $quantity;
 
-        while ($remaining >= $this->monthlyDays($cursor)) {
+        while ($remaining > $this->maxDailyDays($cursor)) {
             $item = $this->makeItem(RentalItem::MONTHLY, $cursor, $this->monthlyDays($cursor));
             $items[] = $item;
             $remaining -= $item['days'];

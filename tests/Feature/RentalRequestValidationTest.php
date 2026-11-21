@@ -155,12 +155,6 @@ class RentalRequestValidationTest extends TestCase
             ->assertSessionHasErrors(['vehicle_type', 'rental_type']);
     }
 
-    public function test_start_date_cannot_be_in_the_past(): void
-    {
-        $this->submit(['start_date' => now()->subDay()->toDateString()])
-            ->assertSessionHasErrors('start_date');
-    }
-
     #[DataProvider('quantitiesOverTheLimit')]
     public function test_quantity_over_the_limit_is_rejected(string $type, int $quantity): void
     {

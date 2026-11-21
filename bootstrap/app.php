@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AttachJwtFromCookie;
 use App\Http\Middleware\EnsureRole;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,6 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [AttachJwtFromCookie::class]);
         $middleware->alias(['role' => EnsureRole::class]);
+
+        // Make sure the cookie token is attached before "auth" runs.
+        $middleware->prependToPriorityList(
+            before: AuthenticatesRequests::class,
+            prepend: AttachJwtFromCookie::class,
+        );
 
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(
