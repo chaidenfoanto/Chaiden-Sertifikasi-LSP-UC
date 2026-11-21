@@ -22,6 +22,11 @@
                     @if (auth()->user()->isAdmin())
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.garages.create') }}">Create Garages</a></li>
                         <li class="nav-item"><a class="nav-link" href="{{ route('admin.renters.index') }}">Verify Renters</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.rentals.index') }}">Extend Rentals</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('admin.reports.index') }}">Reports</a></li>
+                    @else
+                        <li class="nav-item"><a class="nav-link" href="{{ route('renter.rentals.create') }}">New Rental</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('renter.rentals.index') }}">My Rentals</a></li>
                     @endif
                 @endauth
             </ul>
