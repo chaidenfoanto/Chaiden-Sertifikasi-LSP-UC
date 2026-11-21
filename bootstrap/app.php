@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\AttachJwtFromCookie;
+use App\Http\Middleware\EnsureRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,7 +14,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // The JWT cookie is read as plain text, so Laravel must not encrypt it.
+        $middleware->encryptCookies(except: ['access_token']);
+
+        $middleware->web(append: [AttachJwtFromCookie::class]);
+        $middleware->alias(['role' => EnsureRole::class]);
+
+        $middleware->redirectGuestsTo(fn () => route('login'));
+        $middleware->redirectUsersTo(
+            fn () => auth()->user()?->isAdmin()
+                ? route('admin.dashboard')
+                : route('renter.dashboard')
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

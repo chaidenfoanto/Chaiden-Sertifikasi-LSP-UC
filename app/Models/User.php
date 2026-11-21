@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 /**
  * Application user, either an admin or a renter.
  */
-class User extends Authenticatable
+class User extends Authenticatable implements JWTSubject
 {
     public const ROLE_ADMIN = 'admin';
     public const ROLE_RENTER = 'renter';
@@ -64,5 +65,23 @@ class User extends Authenticatable
     public function isApproved(): bool
     {
         return $this->status === self::STATUS_APPROVED;
+    }
+
+    /**
+     * Get the identifier stored in the JWT "sub" claim.
+     */
+    public function getJWTIdentifier(): mixed
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Get custom claims added to the JWT payload (the user role).
+     *
+     * @return array<string, string>
+     */
+    public function getJWTCustomClaims(): array
+    {
+        return ['role' => $this->role];
     }
 }
