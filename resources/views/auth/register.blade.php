@@ -2,7 +2,7 @@
 
 @section('title', 'Register')
 
-@section('content')
+@section('full')
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card shadow-sm">
@@ -45,7 +45,7 @@
                         <input type="password" id="password_confirmation" name="password_confirmation"
                                class="form-control" required>
                     </div>
-                    <button type="submit" class="btn btn-dark w-100">Register</button>
+                    <button type="submit" class="btn btn-dark w-100 py-2">Register</button>
                 </form>
                 <p class="text-center mt-3 mb-0">Already registered? <a href="{{ route('login') }}">Login</a></p>
             </div>
