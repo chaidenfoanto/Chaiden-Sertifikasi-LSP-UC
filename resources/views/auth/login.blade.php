@@ -2,36 +2,26 @@
 
 @section('title', 'Login')
 
-@section('full')
-<div class="auth-grid">
-    <div class="auth-side d-none d-lg-flex">
-        <img src="{{ asset('images/hero.webp') }}" alt="" onerror="this.remove()">
-        <div class="auth-side-text">
-            <h2 class="h3">Welcome back</h2>
-            <p class="mb-0 text-white-50">Log in to rent a garage, review your rentals, and check your payment proofs.</p>
+@section('content')
+<div class="grid min-h-[680px] lg:grid-cols-2">
+    <div class="relative hidden items-end overflow-hidden bg-black p-12 text-white lg:flex">
+        <img src="{{ asset('images/hero.webp') }}" alt="" class="absolute inset-0 size-full object-cover opacity-50" onerror="this.remove()">
+        <div class="relative max-w-sm">
+            <h2 class="font-display text-2xl font-bold">Welcome back</h2>
+            <p class="mt-2 text-neutral-300">Log in to rent a garage, review your rentals, and check your payment proofs.</p>
         </div>
     </div>
-    <div class="auth-form">
-        <div>
-            <h1 class="h3 mb-1">Login</h1>
-            <p class="text-muted mb-4">Use the email you registered with.</p>
-            <form method="POST" action="{{ route('login.store') }}">
+    <div class="flex items-center justify-center px-6 py-12">
+        <div class="w-full max-w-sm">
+            <h1 class="font-display text-3xl font-bold tracking-tight">Login</h1>
+            <p class="mb-8 mt-1 text-neutral-600">Use the email you registered with.</p>
+            <form method="POST" action="{{ route('login.store') }}" class="space-y-5">
                 @csrf
-                <div class="mb-3">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" name="email" value="{{ old('email') }}"
-                           class="form-control @error('email') is-invalid @enderror" required autofocus>
-                    @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <div class="mb-4">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" name="password"
-                           class="form-control @error('password') is-invalid @enderror" required>
-                    @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-                <button type="submit" class="btn btn-dark w-100 py-2">Login</button>
+                <x-input name="email" label="Email" type="email" autofocus />
+                <x-input name="password" label="Password" type="password" />
+                <x-button type="submit" class="w-full">Login</x-button>
             </form>
-            <p class="text-center mt-4 mb-0">No account yet? <a href="{{ route('register') }}" class="fw-semibold">Register</a></p>
+            <p class="mt-6 text-center text-sm">No account yet? <a href="{{ route('register') }}" class="font-semibold underline">Register</a></p>
         </div>
     </div>
 </div>

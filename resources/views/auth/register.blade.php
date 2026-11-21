@@ -2,53 +2,30 @@
 
 @section('title', 'Register')
 
-@section('full')
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h1 class="h4 mb-3">Register as Renter</h1>
-                <form method="POST" action="{{ route('register.store') }}">
-                    @csrf
-                    <div class="mb-3">
-                        <label for="full_name" class="form-label">Full name</label>
-                        <input type="text" id="full_name" name="full_name" value="{{ old('full_name') }}"
-                               class="form-control @error('full_name') is-invalid @enderror" required>
-                        @error('full_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="mb-3">
-                        <label for="nik" class="form-label">NIK (16 digits)</label>
-                        <input type="text" id="nik" name="nik" value="{{ old('nik') }}" maxlength="16"
-                               class="form-control @error('nik') is-invalid @enderror" required>
-                        @error('nik')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="mb-3">
-                        <label for="phone_number" class="form-label">Phone number</label>
-                        <input type="text" id="phone_number" name="phone_number" value="{{ old('phone_number') }}"
-                               class="form-control @error('phone_number') is-invalid @enderror" required>
-                        @error('phone_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email (used as username)</label>
-                        <input type="email" id="email" name="email" value="{{ old('email') }}"
-                               class="form-control @error('email') is-invalid @enderror" required>
-                        @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password (min. 8 characters)</label>
-                        <input type="password" id="password" name="password"
-                               class="form-control @error('password') is-invalid @enderror" required>
-                        @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="mb-3">
-                        <label for="password_confirmation" class="form-label">Confirm password</label>
-                        <input type="password" id="password_confirmation" name="password_confirmation"
-                               class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-dark w-100 py-2">Register</button>
-                </form>
-                <p class="text-center mt-3 mb-0">Already registered? <a href="{{ route('login') }}">Login</a></p>
-            </div>
+@section('content')
+<div class="grid min-h-[680px] lg:grid-cols-2">
+    <div class="relative hidden items-end overflow-hidden bg-black p-12 text-white lg:flex">
+        <img src="{{ asset('images/hero.webp') }}" alt="" class="absolute inset-0 size-full object-cover opacity-50" onerror="this.remove()">
+        <div class="relative max-w-sm">
+            <h2 class="font-display text-2xl font-bold">Rent with a clear total</h2>
+            <p class="mt-2 text-neutral-300">Register once. An admin approves your account, then you can reserve a garage.</p>
+        </div>
+    </div>
+    <div class="flex items-center justify-center px-6 py-12">
+        <div class="w-full max-w-sm">
+            <h1 class="font-display text-3xl font-bold tracking-tight">Register as Renter</h1>
+            <p class="mb-8 mt-1 text-neutral-600">It takes a minute. Approval is done by an admin.</p>
+            <form method="POST" action="{{ route('register.store') }}" class="space-y-5">
+                @csrf
+                <x-input name="full_name" label="Full name" />
+                <x-input name="nik" label="NIK (16 digits)" maxlength="16" inputmode="numeric" />
+                <x-input name="phone_number" label="Phone number" type="tel" />
+                <x-input name="email" label="Email (used as username)" type="email" />
+                <x-input name="password" label="Password (min. 8 characters)" type="password" />
+                <x-input name="password_confirmation" label="Confirm password" type="password" />
+                <x-button type="submit" class="w-full">Register</x-button>
+            </form>
+            <p class="mt-6 text-center text-sm">Already registered? <a href="{{ route('login') }}" class="font-semibold underline">Login</a></p>
         </div>
     </div>
 </div>
