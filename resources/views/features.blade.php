@@ -2,29 +2,10 @@
 
 @section('title', 'Features')
 
-@push('styles')
-<style>
-    /* Semi transparent gray layer that covers the features for visitors. */
-    .locked-area { position: relative; }
-    .locked-overlay {
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        z-index: 10;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-        text-align: center;
-        color: #fff;
-        background-color: rgba(52, 58, 64, 0.7);
-        border-radius: 0.5rem;
-    }
-</style>
-@endpush
+<div class="d-flex gap-2">
+    <a href="{{ route('login') }}" class="btn btn-accent">Login</a>
+    <a href="{{ route('register') }}" class="btn btn-outline-light">Register</a>
+</div>
 
 @section('content')
 <h1 class="h4 mb-1">Features</h1>
