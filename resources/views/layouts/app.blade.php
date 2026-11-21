@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Garage Rental') | Garage Rental</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        @stack('styles')
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
         <a class="navbar-brand" href="{{ url('/') }}">Garage Rental</a>
@@ -14,7 +15,9 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="mainNav">
-            <ul class="navbar-nav me-auto">
+        <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link @if (request()->routeIs('home')) active @endif" href="{{ route('home') }}">Home</a></li>
+                <li class="nav-item"><a class="nav-link @if (request()->routeIs('features')) active @endif" href="{{ route('features') }}">Features</a></li>
                 @auth
                     <li class="nav-item">
                         <a class="nav-link" href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('renter.dashboard') }}">Dashboard</a>
@@ -49,13 +52,17 @@
     </div>
 </nav>
 
-<main class="container py-4">
+<main class="container py-4 flex-grow-1">
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
     @yield('content')
 </main>
+
+<footer class="bg-dark text-white-50 py-3 mt-auto">
+    <div class="container small">&copy; {{ now()->year }} Garage Rental</div>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 @stack('scripts')

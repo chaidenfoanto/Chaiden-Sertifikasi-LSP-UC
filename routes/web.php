@@ -5,12 +5,12 @@ use App\Http\Controllers\Admin\RenterVerificationController;
 use App\Http\Controllers\Admin\RentalExtensionController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\Renter\RentalController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::get('/', [PageController::class, 'home'])->name('home');
+Route::get('/features', [PageController::class, 'features'])->name('features');
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
