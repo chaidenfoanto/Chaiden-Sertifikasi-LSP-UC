@@ -21,8 +21,8 @@ use Tests\TestCase;
  */
 class RentalQuoteEndpointTest extends TestCase
 {
-    use RefreshDatabase;
     use CreatesUsers;
+    use RefreshDatabase;
 
     private User $renter;
 
@@ -50,7 +50,7 @@ class RentalQuoteEndpointTest extends TestCase
     /**
      * Query of a three day car rental starting tomorrow. A null override removes the field.
      *
-     * @param array<string, mixed> $override
+     * @param  array<string, mixed>  $override
      * @return array<string, mixed>
      */
     private function params(array $override = []): array
@@ -66,7 +66,7 @@ class RentalQuoteEndpointTest extends TestCase
     /**
      * Call the renter quote endpoint as the logged in renter.
      *
-     * @param array<string, mixed> $override
+     * @param  array<string, mixed>  $override
      */
     private function quote(array $override = []): TestResponse
     {
