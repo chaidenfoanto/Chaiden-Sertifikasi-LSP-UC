@@ -1,7 +1,7 @@
 @php
     $navLink = 'rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-neutral-100';
     $isAdmin = auth()->check() && auth()->user()->isAdmin();
-    $dashboard = auth()->check() ? ($isAdmin ? route('admin.dashboard') : route('renter.dashboard')) : null;
+    $dashboard = $isAdmin ? route('admin.dashboard') : null;
     $menuItem = 'block w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-neutral-100';
 @endphp
 <!DOCTYPE html>
@@ -38,7 +38,12 @@
                     <x-button :href="route('register')">Register</x-button>
                 @endguest
                 @auth
-                    <a href="{{ $dashboard }}" class="{{ $navLink }} {{ request()->routeIs('admin.dashboard', 'renter.dashboard') ? 'bg-neutral-100' : '' }}">Dashboard</a>
+                    @if ($isAdmin)
+                        <a href="{{ $dashboard }}" class="{{ $navLink }} {{ request()->routeIs('admin.dashboard') ? 'bg-neutral-100' : '' }}">Dashboard</a>
+                    @else
+                        <a href="{{ route('renter.rentals.create') }}" class="{{ $navLink }} {{ request()->routeIs('renter.rentals.create') ? 'bg-neutral-100' : '' }}">New Rental</a>
+                        <a href="{{ route('renter.rentals.index') }}" class="{{ $navLink }} {{ request()->routeIs('renter.rentals.index') ? 'bg-neutral-100' : '' }}">My Rentals</a>
+                    @endif
                     <details data-dropdown class="group relative">
                         <summary class="{{ $navLink }} cursor-pointer list-none items-center gap-1 [&::-webkit-details-marker]:hidden">
                             {{ auth()->user()->full_name }}
@@ -50,11 +55,8 @@
                                 <a href="{{ route('admin.renters.index') }}" class="{{ $menuItem }}">Verify Renters</a>
                                 <a href="{{ route('admin.rentals.index') }}" class="{{ $menuItem }}">Extend Rentals</a>
                                 <a href="{{ route('admin.reports.index') }}" class="{{ $menuItem }}">Reports</a>
-                            @else
-                                <a href="{{ route('renter.rentals.create') }}" class="{{ $menuItem }}">New Rental</a>
-                                <a href="{{ route('renter.rentals.index') }}" class="{{ $menuItem }}">My Rentals</a>
                             @endif
-                            <form method="POST" action="{{ route('logout') }}" class="mt-1 border-t border-neutral-200 pt-1">
+                            <form method="POST" action="{{ route('logout') }}" @class(['mt-1 border-t border-neutral-200 pt-1' => $isAdmin])>
                                 @csrf
                                 <button type="submit" class="{{ $menuItem }}">Logout</button>
                             </form>
@@ -98,7 +100,12 @@
                         <li><a href="{{ route('register') }}" class="hover:text-white hover:underline">Register</a></li>
                     @endguest
                     @auth
-                        <li><a href="{{ $dashboard }}" class="hover:text-white hover:underline">Dashboard</a></li>
+                        @if ($isAdmin)
+                            <li><a href="{{ $dashboard }}" class="hover:text-white hover:underline">Dashboard</a></li>
+                        @else
+                            <li><a href="{{ route('renter.rentals.create') }}" class="hover:text-white hover:underline">New Rental</a></li>
+                            <li><a href="{{ route('renter.rentals.index') }}" class="hover:text-white hover:underline">My Rentals</a></li>
+                        @endif
                     @endauth
                 </ul>
             </div>

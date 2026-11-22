@@ -12,9 +12,9 @@
     $rupiah = fn (?int $amount): string => $amount === null ? 'Not set yet' : 'Rp ' . number_format($amount, 0, ',', '.');
     $totalGarages = $garageTypes->sum('garages_count');
     $minPrice = $garageTypes->whereNotNull('daily_price')->min('daily_price');
-    $dashboard = auth()->check()
-        ? (auth()->user()->isAdmin() ? route('admin.dashboard') : route('renter.dashboard'))
-        : null;
+    $isAdmin = auth()->check() && auth()->user()->isAdmin();
+    $memberUrl = $isAdmin ? route('admin.dashboard') : route('renter.rentals.create');
+    $memberLabel = $isAdmin ? 'Go to dashboard' : 'Start a rental';
     $stats = array_filter([
         $totalGarages > 0 ? [$totalGarages, 'Garages'] : null,
         [$garageTypes->count(), 'Garage types'],
@@ -25,7 +25,7 @@
 <section class="bg-black text-white">
     <div class="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-20">
         <div>
-            <h1 class="font-display text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl">Rent a garage for your bicycle, motorcycle, or car</h1>
+            <h1 class="font-display text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl">Rent a garage for your vehicle</h1>
             <p class="mt-5 max-w-lg text-neutral-300">Choose your vehicle and dates, see the full cost before you pay, and keep a garage reserved for the whole period.</p>
             <div class="mt-8 flex flex-wrap gap-3">
                 @guest
@@ -33,7 +33,7 @@
                     <x-button :href="route('login')" variant="outline-light" size="lg">Login</x-button>
                 @endguest
                 @auth
-                    <x-button :href="$dashboard" variant="light" size="lg">Go to dashboard</x-button>
+                    <x-button :href="$memberUrl" variant="light" size="lg">{{ $memberLabel }}</x-button>
                 @endauth
                 <x-button :href="route('features')" variant="outline-light" size="lg">See features</x-button>
             </div>
@@ -144,7 +144,7 @@
                 <x-button :href="route('login')" variant="outline-light" size="lg">Login</x-button>
             @endguest
             @auth
-                <x-button :href="$dashboard" variant="light" size="lg">Go to dashboard</x-button>
+                <x-button :href="$memberUrl" variant="light" size="lg">{{ $memberLabel }}</x-button>
             @endauth
         </div>
     </div>

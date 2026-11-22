@@ -90,7 +90,8 @@ class AuthController extends Controller
             'lax'
         );
 
-        $route = $user->isAdmin() ? 'admin.dashboard' : 'renter.dashboard';
+        // Admins land on their dashboard, renters on the home page.
+        $route = $user->isAdmin() ? 'admin.dashboard' : 'home';
 
         return redirect()->route($route)->withCookie($cookie);
     }

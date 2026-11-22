@@ -41,8 +41,6 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:renter')->prefix('renter')->name('renter.')->group(function () {
-        Route::view('/dashboard', 'renter.dashboard')->name('dashboard');
-
         Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
         Route::get('/rentals/create', [RentalController::class, 'create'])->name('rentals.create');
         Route::get('/rentals/quote', [RentalController::class, 'quote'])->name('rentals.quote');

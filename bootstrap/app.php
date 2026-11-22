@@ -31,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(
             fn () => auth()->user()?->isAdmin()
                 ? route('admin.dashboard')
-                : route('renter.dashboard')
+                : route('home')
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
