@@ -30,6 +30,23 @@ class GarageServiceTest extends TestCase
         $this->assertSame(['E001'], $service->createBatch($electric, 1, 100000, 2000));
     }
 
+    public function test_new_batch_price_applies_to_the_whole_type(): void
+    {
+        $this->seed(GarageTypeSeeder::class);
+        $service = new GarageService();
+        $car = GarageType::where('name', GarageType::CAR)->first();
+
+        $service->createBatch($car, 2, 10000, null);
+        $this->assertEquals(250000, $car->fresh()->monthly_price);
+
+        $service->createBatch($car, 3, 15000, null);
+
+        $car = $car->fresh();
+        $this->assertEquals(15000, $car->daily_price);
+        $this->assertEquals(375000, $car->monthly_price);
+        $this->assertSame(5, $car->garages()->count());
+    }
+
     public function test_batch_over_999_garages_is_rejected(): void
     {
         $this->seed(GarageTypeSeeder::class);

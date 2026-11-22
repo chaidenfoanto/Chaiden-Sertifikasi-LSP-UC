@@ -41,8 +41,8 @@ class RentalRequestValidationTest extends TestCase
         $data = array_merge([
             'vehicle_type' => 'car',
             'rental_type' => 'daily',
-            'quantity' => 3,
             'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(2)->toDateString(),
             'garage_id' => 999999,
             'plate_number' => 'DD 1234 AB',
             'brand' => 'Toyota',
@@ -68,36 +68,6 @@ class RentalRequestValidationTest extends TestCase
             'motorcycle' => ['motorcycle'],
             'car' => ['car'],
             'electric car' => ['electric_car'],
-        ];
-    }
-
-    /**
-     * Quantities that are one step over the limit.
-     *
-     * @return array<string, array{0: string, 1: int}>
-     */
-    public static function quantitiesOverTheLimit(): array
-    {
-        return [
-            'zero days' => ['daily', 0],
-            'daily over 366' => ['daily', 367],
-            'zero months' => ['monthly', 0],
-            'monthly over 12' => ['monthly', 13],
-        ];
-    }
-
-    /**
-     * Quantities that sit exactly on the limit and must be accepted.
-     *
-     * @return array<string, array{0: string, 1: int}>
-     */
-    public static function quantitiesOnTheLimit(): array
-    {
-        return [
-            'one day' => ['daily', 1],
-            'daily 366' => ['daily', 366],
-            'one month' => ['monthly', 1],
-            'monthly 12' => ['monthly', 12],
         ];
     }
 
@@ -155,18 +125,29 @@ class RentalRequestValidationTest extends TestCase
             ->assertSessionHasErrors(['vehicle_type', 'rental_type']);
     }
 
-    #[DataProvider('quantitiesOverTheLimit')]
-    public function test_quantity_over_the_limit_is_rejected(string $type, int $quantity): void
+    public function test_daily_rental_requires_an_end_date(): void
     {
-        $this->submit(['rental_type' => $type, 'quantity' => $quantity])
-            ->assertSessionHasErrors('quantity');
+        $this->submit([], ['end_date'])->assertSessionHasErrors('end_date');
     }
 
-    #[DataProvider('quantitiesOnTheLimit')]
-    public function test_quantity_on_the_limit_is_accepted(string $type, int $quantity): void
+    public function test_monthly_rental_does_not_need_an_end_date(): void
     {
-        $this->submit(['rental_type' => $type, 'quantity' => $quantity])
-            ->assertSessionDoesntHaveErrors('quantity');
+        $this->submit(['rental_type' => 'monthly'], ['end_date'])
+            ->assertSessionDoesntHaveErrors('end_date');
+    }
+
+    public function test_end_date_before_the_start_date_is_rejected(): void
+    {
+        $this->submit([
+            'start_date' => now()->addDays(5)->toDateString(),
+            'end_date' => now()->addDays(4)->toDateString(),
+        ])->assertSessionHasErrors('end_date');
+    }
+
+    public function test_one_day_rental_with_the_same_start_and_end_date_is_accepted(): void
+    {
+        $this->submit(['end_date' => now()->toDateString()])
+            ->assertSessionDoesntHaveErrors('end_date');
     }
 
     public function test_payment_proof_is_required(): void

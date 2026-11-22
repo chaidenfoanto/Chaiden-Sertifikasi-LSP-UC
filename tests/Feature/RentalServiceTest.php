@@ -62,11 +62,14 @@ class RentalServiceTest extends TestCase
      */
     private function payload(string $garageCode, array $override = []): array
     {
+        $start = $override['start_date'] ?? $this->day(1);
+
         return array_merge([
             'vehicle_type' => 'car',
             'rental_type' => 'daily',
-            'quantity' => 3,
-            'start_date' => $this->day(1),
+            'start_date' => $start,
+            // Three days by default, the start day and the two days after it.
+            'end_date' => CarbonImmutable::parse($start)->addDays(2)->toDateString(),
             'garage_id' => Garage::where('code', $garageCode)->value('id'),
             'plate_number' => 'DD 1234 AB',
             'brand' => 'Toyota',
@@ -103,7 +106,7 @@ class RentalServiceTest extends TestCase
 
         $rental = $this->service->create($this->renter, $this->payload('E001', [
             'vehicle_type' => 'electric_car',
-            'quantity' => 2,
+            'end_date' => $this->day(2),
             'battery_capacity_kwh' => 60,
             'remaining_battery_kwh' => 20,
         ]), $this->proof());
@@ -182,7 +185,7 @@ class RentalServiceTest extends TestCase
         $this->service->create($this->renter, $this->payload('C001', [
             'plate_number' => 'DD 9999 ZZ',
             'start_date' => $this->day(4),
-            'quantity' => 2,
+            'end_date' => $this->day(5),
         ]), $this->proof());
 
         $this->expectException(ValidationException::class);
@@ -196,6 +199,78 @@ class RentalServiceTest extends TestCase
 
         $this->expectException(ValidationException::class);
         $this->service->extend($future, $this->day(8), $this->proof());
+    }
+
+    public function test_monthly_rental_lasts_as_many_days_as_its_start_month(): void
+    {
+        $this->makeGarages(GarageType::CAR, 1, 100000);
+
+        // November has 30 days, so a monthly rental from the 15th ends on December 14.
+        $rental = $this->service->create($this->renter, $this->payload('C001', [
+            'rental_type' => 'monthly',
+            'start_date' => '2030-11-15',
+            'end_date' => null,
+        ]), $this->proof());
+
+        $this->assertSame('2030-12-14', $rental->end_date->toDateString());
+        $this->assertSame(2500000, $rental->total_cost);
+        $this->assertSame(30, $rental->items->first()->days);
+    }
+
+    public function test_daily_rental_can_last_the_start_month_days_minus_one(): void
+    {
+        $this->makeGarages(GarageType::CAR, 1, 100000);
+
+        $rental = $this->service->create($this->renter, $this->payload('C001', [
+            'start_date' => '2030-11-15',
+            'end_date' => '2030-12-13',
+        ]), $this->proof());
+
+        $this->assertSame(2900000, $rental->total_cost);
+        $this->assertCount(1, $rental->items);
+    }
+
+    public function test_daily_rental_over_the_start_month_limit_is_rejected(): void
+    {
+        $this->makeGarages(GarageType::CAR, 1, 100000);
+
+        $this->expectException(ValidationException::class);
+        $this->service->create($this->renter, $this->payload('C001', [
+            'start_date' => '2030-11-15',
+            'end_date' => '2030-12-14',
+        ]), $this->proof());
+    }
+
+    public function test_daily_rental_with_an_end_date_before_the_start_is_rejected(): void
+    {
+        $this->makeGarages(GarageType::CAR, 1, 100000);
+
+        $this->expectException(ValidationException::class);
+        $this->service->create($this->renter, $this->payload('C001', [
+            'start_date' => $this->day(5),
+            'end_date' => $this->day(4),
+        ]), $this->proof());
+    }
+
+    public function test_extension_goes_to_the_last_rental_of_the_same_stay(): void
+    {
+        $this->makeGarages(GarageType::CAR, 1, 100000);
+
+        // One stay saved with two inputs: day 0 to 2, then day 3 to 4.
+        $first = $this->service->create($this->renter, $this->payload('C001', [
+            'start_date' => $this->day(0),
+        ]), $this->proof());
+        $second = $this->service->create($this->renter, $this->payload('C001', [
+            'start_date' => $this->day(3),
+            'end_date' => $this->day(4),
+        ]), $this->proof());
+
+        $extension = $this->service->extend($first, $this->day(7), $this->proof());
+
+        $this->assertSame($second->id, $extension->rental_id);
+        $this->assertSame(300000, $extension->additional_cost);
+        $this->assertSame($this->day(2), $first->fresh()->end_date->toDateString());
+        $this->assertSame($this->day(7), $second->fresh()->end_date->toDateString());
     }
 
     public function test_renter_reuses_own_vehicle_when_the_plate_is_the_same(): void

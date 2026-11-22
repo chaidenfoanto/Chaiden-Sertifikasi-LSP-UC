@@ -85,6 +85,53 @@ class RentalPlanner
     }
 
     /**
+     * Build the single date range of a new rental.
+     *
+     * A monthly rental lasts as many days as its start month has. A daily
+     * rental runs from the start date to the given end date and may last at
+     * most the days of its start month minus 1. A longer stay is made by
+     * saving another rental that starts the day after this one ends.
+     *
+     * @return array<int, array{rental_type: string, start_date: CarbonImmutable, end_date: CarbonImmutable, days: int}>
+     *
+     * @throws InvalidArgumentException When the type or the dates are invalid.
+     */
+    public function planSingle(CarbonInterface $startDate, string $rentalType, ?CarbonInterface $endDate): array
+    {
+        $start = CarbonImmutable::instance($startDate)->startOfDay();
+
+        if ($rentalType === RentalItem::MONTHLY) {
+            return [$this->makeItem(RentalItem::MONTHLY, $start, $this->monthlyDays($start))];
+        }
+
+        if ($rentalType !== RentalItem::DAILY) {
+            throw new InvalidArgumentException('Unknown rental type.');
+        }
+
+        if ($endDate === null) {
+            throw new InvalidArgumentException('An end date is required for a daily rental.');
+        }
+
+        $end = CarbonImmutable::instance($endDate)->startOfDay();
+
+        if ($end->lt($start)) {
+            throw new InvalidArgumentException('The end date cannot be before the start date.');
+        }
+
+        $days = (int) round($start->diffInDays($end)) + 1;
+        $maxDays = $this->maxDailyDays($start);
+
+        if ($days > $maxDays) {
+            throw new InvalidArgumentException(
+                "A daily rental starting on this date can last at most {$maxDays} days. "
+                . 'For a longer stay, save this rental and make another one that starts the day after it ends.'
+            );
+        }
+
+        return [$this->makeItem(RentalItem::DAILY, $start, $days)];
+    }
+
+    /**
      * The last day covered by a plan.
      *
      * @param array<int, array{end_date: CarbonImmutable}> $plan

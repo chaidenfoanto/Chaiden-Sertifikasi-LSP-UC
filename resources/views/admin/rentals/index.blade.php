@@ -36,14 +36,19 @@
                             {{ $rental->vehicle->brand }} {{ $rental->vehicle->model_name }}
                             <div class="text-xs text-neutral-500">{{ $rental->vehicle->plate_number ?? 'No plate' }}</div>
                         </td>
-                        <td class="whitespace-nowrap">{{ $rental->start_date->toDateString() }} to {{ $rental->end_date->toDateString() }}</td>
+                        <td class="whitespace-nowrap">
+                            {{ $rental->start_date->toDateString() }} to {{ $rental->end_date->toDateString() }}
+                            @if ($rental->stay_end_date !== $rental->end_date->toDateString())
+                                <div class="text-xs text-neutral-500">Stay continues until {{ $rental->stay_end_date }}</div>
+                            @endif
+                        </td>
                         <td class="text-right">Rp {{ number_format($rental->total_cost, 0, ',', '.') }}</td>
                         <td><x-proof-links :rental="$rental" /></td>
                         <td class="text-right">
                             <x-button size="sm" data-extend
                                       data-id="{{ $rental->id }}"
                                       data-garage="{{ $rental->garage->code }}"
-                                      data-end="{{ $rental->end_date->toDateString() }}">Extend</x-button>
+                                      data-end="{{ $rental->stay_end_date }}">Extend</x-button>
                         </td>
                     </tr>
                 @endforeach

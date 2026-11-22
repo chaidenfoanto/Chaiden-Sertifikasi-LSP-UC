@@ -20,12 +20,18 @@ class RentalExtensionController extends Controller
     /**
      * List rentals that cover today, the ones that can be extended.
      */
-    public function index(): View
+    public function index(RentalService $rentalService): View
     {
         $rentals = Rental::activeOn(CarbonImmutable::today())
             ->with(['user', 'vehicle', 'garage.type', 'extensions'])
             ->orderBy('end_date')
             ->get();
+
+        // A stay made of back to back rentals ends at its last rental, which is
+        // where the extension is applied.
+        foreach ($rentals as $rental) {
+            $rental->stay_end_date = $rentalService->extensionTarget($rental)->end_date->toDateString();
+        }
 
         return view('admin.rentals.index', compact('rentals'));
     }

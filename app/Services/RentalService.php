@@ -16,6 +16,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 use Throwable;
 
 /**
@@ -37,8 +38,8 @@ class RentalService
      */
     public function quote(array $data): array
     {
-        $start = $this->resolveStartDate($data['start_date'] ?? null);
-        $plan = $this->planner->plan($start, $data['rental_type'], (int) $data['quantity']);
+        $plan = $this->planNewRental($data);
+        $start = $plan[0]['start_date'];
         $end = $this->planner->endDate($plan);
 
         $subtotals = [];
@@ -104,8 +105,8 @@ class RentalService
      */
     public function create(User $renter, array $data, UploadedFile $proof): Rental
     {
-        $start = $this->resolveStartDate($data['start_date'] ?? null);
-        $plan = $this->planner->plan($start, $data['rental_type'], (int) $data['quantity']);
+        $plan = $this->planNewRental($data);
+        $start = $plan[0]['start_date'];
         $end = $this->planner->endDate($plan);
         $storedPath = null;
 
@@ -184,11 +185,12 @@ class RentalService
     public function quoteExtension(Rental $rental, string $newEndDate): array
     {
         $newEnd = CarbonImmutable::createFromFormat('Y-m-d', $newEndDate)->startOfDay();
-        $result = $this->planExtension($rental->loadMissing('garage.type'), $newEnd);
+        $result = $this->planExtension($rental, $newEnd);
+        $target = $result['target'];
 
         return [
-            'rental_id' => $rental->id,
-            'current_end_date' => $rental->end_date->toDateString(),
+            'rental_id' => $target->id,
+            'current_end_date' => $target->end_date->toDateString(),
             'new_end_date' => $newEnd->toDateString(),
             'extra_days' => $result['extra_days'],
             'items' => $this->formatItems($result['items']),
@@ -208,26 +210,29 @@ class RentalService
 
         try {
             return DB::transaction(function () use ($rental, $newEnd, $proof, &$storedPath): RentalExtension {
-                $locked = Rental::with('garage.type')->whereKey($rental->id)->lockForUpdate()->firstOrFail();
-                $result = $this->planExtension($locked, $newEnd);
+                // Lock the garage like a new rental does, so both cannot claim the same days.
+                Garage::whereKey($rental->garage_id)->lockForUpdate()->firstOrFail();
+
+                $result = $this->planExtension(Rental::findOrFail($rental->id), $newEnd);
+                $target = $result['target'];
 
                 $storedPath = $proof->store('payment_proofs', 'public');
 
                 $extension = RentalExtension::create([
-                    'rental_id' => $locked->id,
-                    'previous_end_date' => $locked->end_date->toDateString(),
+                    'rental_id' => $target->id,
+                    'previous_end_date' => $target->end_date->toDateString(),
                     'new_end_date' => $newEnd->toDateString(),
                     'additional_cost' => $result['cost'],
                     'payment_proof_path' => $storedPath,
                 ]);
 
                 foreach ($result['items'] as $item) {
-                    $locked->items()->create($this->itemAttributes($item));
+                    $target->items()->create($this->itemAttributes($item));
                 }
 
-                $locked->update([
+                $target->update([
                     'end_date' => $newEnd->toDateString(),
-                    'total_cost' => $locked->total_cost + $result['cost'],
+                    'total_cost' => $target->total_cost + $result['cost'],
                 ]);
 
                 return $extension;
@@ -242,12 +247,38 @@ class RentalService
     }
 
     /**
+     * The rental that receives an extension for the stay of the given rental.
+     *
+     * A stay longer than one month is saved as several rentals that follow each
+     * other (same renter, same garage, each starting the day after the previous
+     * one ends). An extension always applies to the last of them.
+     */
+    public function extensionTarget(Rental $rental): Rental
+    {
+        $current = $rental;
+
+        while (true) {
+            $next = Rental::where('user_id', $current->user_id)
+                ->where('garage_id', $current->garage_id)
+                ->whereDate('start_date', $current->end_date->toImmutable()->addDay()->toDateString())
+                ->first();
+
+            if ($next === null) {
+                return $current;
+            }
+
+            $current = $next;
+        }
+    }
+
+    /**
      * Validate an extension and price the extra days.
      *
-     * Extra days start the day after the current end date and use the same
-     * split rule as a new rental, so a full extra month is billed monthly.
+     * The rental passed in must be active today. The extra days are added to
+     * the last rental of its stay, start the day after that rental ends, and
+     * are billed daily, except that a full extra month is billed monthly.
      *
-     * @return array{extra_days: int, items: array<int, array<string, mixed>>, cost: int}
+     * @return array{extra_days: int, items: array<int, array<string, mixed>>, cost: int, target: Rental}
      */
     private function planExtension(Rental $rental, CarbonImmutable $newEnd): array
     {
@@ -255,7 +286,8 @@ class RentalService
             $this->fail('rental', 'Only rentals that are active today can be extended.');
         }
 
-        $currentEnd = CarbonImmutable::instance($rental->end_date)->startOfDay();
+        $target = $this->extensionTarget($rental)->loadMissing('garage.type');
+        $currentEnd = CarbonImmutable::instance($target->end_date)->startOfDay();
 
         if ($newEnd->lte($currentEnd)) {
             $this->fail('new_end_date', 'The new end date must be after the current end date.');
@@ -269,8 +301,8 @@ class RentalService
 
         $from = $currentEnd->addDay();
 
-        $conflict = Rental::where('garage_id', $rental->garage_id)
-            ->where('id', '!=', $rental->id)
+        $conflict = Rental::where('garage_id', $target->garage_id)
+            ->where('id', '!=', $target->id)
             ->overlapping($from, $newEnd)
             ->exists();
 
@@ -279,12 +311,13 @@ class RentalService
         }
 
         $plan = $this->planner->plan($from, RentalItem::DAILY, $extraDays);
-        $items = $this->pricing->priceItems($plan, $rental->garage->type->daily_price);
+        $items = $this->pricing->priceItems($plan, $target->garage->type->daily_price);
 
         return [
             'extra_days' => $extraDays,
             'items' => $items,
             'cost' => $this->pricing->subtotal($items),
+            'target' => $target,
         ];
     }
 
@@ -348,6 +381,28 @@ class RentalService
         return $applies
             ? $this->pricing->chargingCost((float) $capacity, (float) $remaining, (int) $garageType->electricity_price_per_kwh)
             : 0;
+    }
+
+    /**
+     * Build the single date range of a new rental from validated input.
+     *
+     * @param array<string, mixed> $data
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws ValidationException When the dates break a rental rule.
+     */
+    private function planNewRental(array $data): array
+    {
+        $start = $this->resolveStartDate($data['start_date'] ?? null);
+        $end = empty($data['end_date'])
+            ? null
+            : CarbonImmutable::createFromFormat('Y-m-d', $data['end_date'])->startOfDay();
+
+        try {
+            return $this->planner->planSingle($start, $data['rental_type'], $end);
+        } catch (InvalidArgumentException $exception) {
+            $this->fail('end_date', $exception->getMessage());
+        }
     }
 
     /**

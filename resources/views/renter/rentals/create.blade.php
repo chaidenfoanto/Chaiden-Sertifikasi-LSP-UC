@@ -60,29 +60,26 @@
             </x-card>
 
             <x-card title="Rental period">
-                <div class="grid gap-4 md:grid-cols-3">
-                    <div>
-                        <label for="rental_type" class="field-label">Rental type</label>
-                        <select id="rental_type" name="rental_type" class="field" required>
-                            <option value="daily" @selected(old('rental_type', 'daily') === 'daily')>Daily</option>
-                            <option value="monthly" @selected(old('rental_type') === 'monthly')>Monthly</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="quantity" id="quantityLabel" class="field-label">Number of days (1 to 366)</label>
-                        <input type="number" id="quantity" name="quantity" value="{{ old('quantity') }}" min="1" max="366" class="field" required>
-                    </div>
+                <input type="hidden" name="rental_type" id="rental_type" value="{{ old('rental_type', 'daily') }}">
+                <div class="mb-4 grid grid-cols-2 gap-2" role="group" aria-label="Rental type">
+                    <button type="button" data-rental-type="daily"
+                            class="rounded-lg border px-4 py-2 text-sm font-semibold">Daily</button>
+                    <button type="button" data-rental-type="monthly"
+                            class="rounded-lg border px-4 py-2 text-sm font-semibold">Monthly</button>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2">
                     <div>
                         <label for="start_date" class="field-label">Start date</label>
                         <input type="date" id="start_date" name="start_date"
                             value="{{ old('start_date', now()->toDateString()) }}"
                             min="{{ now()->toDateString() }}" class="field" required>
                     </div>
+                    <div id="endDateGroup">
+                        <label for="end_date" class="field-label">End date</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ old('end_date') }}" class="field">
+                    </div>
                 </div>
-                <p class="mt-3 text-xs text-neutral-500">
-                    A daily part can be at most the days of its month minus 1. A longer rental is split
-                    automatically into monthly and daily parts, and a monthly part costs 25 times the daily price.
-                </p>
+                <p id="periodHint" class="mt-3 text-xs text-neutral-500"></p>
             </x-card>
         </div>
 
@@ -139,9 +136,11 @@
         const batteryCapacity = byId('battery_capacity_kwh');
         const batteryRemaining = byId('remaining_battery_kwh');
         const rentalType = byId('rental_type');
-        const quantity = byId('quantity');
-        const quantityLabel = byId('quantityLabel');
+        const typeButtons = document.querySelectorAll('[data-rental-type]');
         const startDate = byId('start_date');
+        const endDate = byId('end_date');
+        const endDateGroup = byId('endDateGroup');
+        const periodHint = byId('periodHint');
         const previewMessage = byId('previewMessage');
         const previewContent = byId('previewContent');
         const previewDates = byId('previewDates');
@@ -194,16 +193,67 @@
             batteryCapacity.required = isElectric();
             batteryRemaining.required = isElectric();
 
+            syncPeriod();
+        }
+
+        // Date helpers work in UTC so daylight saving never shifts a day.
+        const pad = (number) => String(number).padStart(2, '0');
+        const toIso = (date) => date.getUTCFullYear() + '-' + pad(date.getUTCMonth() + 1) + '-' + pad(date.getUTCDate());
+        const parseIso = (text) => {
+            const [year, month, day] = text.split('-').map(Number);
+            return new Date(Date.UTC(year, month - 1, day));
+        };
+        const addDays = (date, amount) => new Date(date.getTime() + amount * 86400000);
+        const daysInMonthOf = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+
+        // Highlight the chosen rental type and explain the date rules for the start month.
+        function syncPeriod() {
             const monthly = rentalType.value === 'monthly';
-            quantityLabel.textContent = monthly ? 'Number of months (1 to 12)' : 'Number of days (1 to 366)';
-            quantity.max = monthly ? 12 : 366;
+
+            typeButtons.forEach((button) => {
+                const active = button.dataset.rentalType === rentalType.value;
+                button.classList.toggle('bg-black', active);
+                button.classList.toggle('text-white', active);
+                button.classList.toggle('border-black', active);
+                button.classList.toggle('bg-white', ! active);
+                button.classList.toggle('text-neutral-700', ! active);
+                button.classList.toggle('border-neutral-300', ! active);
+            });
+
+            endDateGroup.classList.toggle('hidden', monthly);
+            endDate.disabled = monthly;
+            endDate.required = ! monthly;
+
+            if (! startDate.value) {
+                periodHint.textContent = '';
+                return;
+            }
+
+            const start = parseIso(startDate.value);
+            const monthDays = daysInMonthOf(start);
+            const monthName = start.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
+
+            if (monthly) {
+                periodHint.textContent = 'A monthly rental that starts in ' + monthName + ' lasts ' + monthDays
+                    + ' days and ends on ' + toIso(addDays(start, monthDays - 1))
+                    + '. It costs 25 times the daily price.';
+                return;
+            }
+
+            const maxDays = monthDays - 1;
+            const latest = toIso(addDays(start, maxDays - 1));
+            endDate.min = startDate.value;
+            endDate.max = latest;
+            periodHint.textContent = 'A daily rental that starts in ' + monthName + ' can last at most ' + maxDays
+                + ' days, so the latest end date is ' + latest + '. For a longer stay, save this rental and make'
+                + ' another one that starts the day after it ends.';
         }
 
         function buildQuery() {
             const params = new URLSearchParams();
             params.set('vehicle_type', vehicleType.value);
             params.set('rental_type', rentalType.value);
-            params.set('quantity', quantity.value);
+            if (rentalType.value === 'daily' && endDate.value) params.set('end_date', endDate.value);
             if (startDate.value) params.set('start_date', startDate.value);
             if (isElectric()) {
                 if (batteryCapacity.value) params.set('battery_capacity_kwh', batteryCapacity.value);
@@ -306,7 +356,7 @@
         }
 
         async function loadQuote() {
-            if (! vehicleType.value || ! quantity.value) {
+            if (! vehicleType.value || (rentalType.value === 'daily' && ! endDate.value)) {
                 setMessage('Fill in the vehicle type and duration to see the cost.', false);
                 return;
             }
@@ -344,7 +394,7 @@
             timer = setTimeout(loadQuote, 300);
         }
 
-        [vehicleType, rentalType, quantity, startDate, batteryCapacity, batteryRemaining].forEach((field) => {
+        [vehicleType, startDate, endDate, batteryCapacity, batteryRemaining].forEach((field) => {
             field.addEventListener('input', () => {
                 syncFields();
                 schedule();
@@ -354,6 +404,15 @@
         vehicleType.addEventListener('input', () => {
             syncGarageTypes();
             renderGarages();
+        });
+
+        // The daily and monthly buttons write into the hidden rental_type field.
+        typeButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                rentalType.value = button.dataset.rentalType;
+                syncFields();
+                schedule();
+            });
         });
         garageType.addEventListener('change', renderGarages);
 

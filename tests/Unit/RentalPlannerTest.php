@@ -83,6 +83,57 @@ class RentalPlannerTest extends TestCase
         $this->assertSame('2027-04-01', $this->planner->endDate($plan)->toDateString());
     }
 
+    public function test_single_monthly_rental_lasts_as_long_as_its_start_month(): void
+    {
+        $november = $this->planner->planSingle($this->day(2026, 11, 15), 'monthly', null);
+        $december = $this->planner->planSingle($this->day(2026, 12, 1), 'monthly', null);
+
+        $this->assertCount(1, $november);
+        $this->assertSame(30, $november[0]['days']);
+        $this->assertSame('2026-12-14', $november[0]['end_date']->toDateString());
+        $this->assertSame(31, $december[0]['days']);
+        $this->assertSame('2026-12-31', $december[0]['end_date']->toDateString());
+    }
+
+    public function test_single_daily_rental_may_last_29_days_in_november_even_from_the_15th(): void
+    {
+        $plan = $this->planner->planSingle($this->day(2026, 11, 15), 'daily', $this->day(2026, 12, 13));
+
+        $this->assertSame('daily', $plan[0]['rental_type']);
+        $this->assertSame(29, $plan[0]['days']);
+    }
+
+    public function test_single_daily_rental_of_30_days_in_november_is_rejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->planner->planSingle($this->day(2026, 11, 15), 'daily', $this->day(2026, 12, 14));
+    }
+
+    public function test_single_daily_rental_in_february_of_a_common_year_allows_27_days(): void
+    {
+        $plan = $this->planner->planSingle($this->day(2027, 2, 1), 'daily', $this->day(2027, 2, 27));
+
+        $this->assertSame(27, $plan[0]['days']);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->planner->planSingle($this->day(2027, 2, 1), 'daily', $this->day(2027, 2, 28));
+    }
+
+    public function test_single_daily_rental_needs_an_end_date_that_is_not_before_the_start(): void
+    {
+        $sameDay = $this->planner->planSingle($this->day(2026, 11, 15), 'daily', $this->day(2026, 11, 15));
+        $this->assertSame(1, $sameDay[0]['days']);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->planner->planSingle($this->day(2026, 11, 15), 'daily', $this->day(2026, 11, 14));
+    }
+
+    public function test_single_daily_rental_without_an_end_date_is_rejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->planner->planSingle($this->day(2026, 11, 15), 'daily', null);
+    }
+
     public function test_invalid_quantity_is_rejected(): void
     {
         $this->expectException(InvalidArgumentException::class);

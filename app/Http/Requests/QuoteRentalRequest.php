@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\RentalItem;
 use App\Models\Vehicle;
-use App\Services\RentalPlanner;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,15 +28,12 @@ class QuoteRentalRequest extends FormRequest
      */
     public function rules(): array
     {
-        $maxQuantity = $this->input('rental_type') === RentalItem::MONTHLY
-            ? RentalPlanner::MAX_MONTHS
-            : RentalPlanner::MAX_DAYS;
-
         return [
             'vehicle_type' => ['required', Rule::in(Vehicle::TYPES)],
             'rental_type' => ['required', Rule::in([RentalItem::DAILY, RentalItem::MONTHLY])],
-            'quantity' => ['required', 'integer', 'min:1', 'max:' . $maxQuantity],
-            'start_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today'],
+            'start_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
+            // A monthly rental ends on its own, so only a daily rental needs an end date.
+            'end_date' => ['nullable', 'required_if:rental_type,daily', 'date_format:Y-m-d', 'after_or_equal:start_date'],
             'battery_capacity_kwh' => ['nullable', 'numeric', 'gt:0', 'max:500'],
             'remaining_battery_kwh' => ['nullable', 'numeric', 'gte:0'],
         ];
@@ -47,6 +44,11 @@ class QuoteRentalRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        // The start date defaults to today when it is left empty.
+        if (blank($this->input('start_date'))) {
+            $this->merge(['start_date' => CarbonImmutable::today()->toDateString()]);
+        }
+
         $plate = $this->input('plate_number');
 
         if (is_string($plate)) {

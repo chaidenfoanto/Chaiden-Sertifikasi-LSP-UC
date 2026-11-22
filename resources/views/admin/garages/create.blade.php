@@ -15,6 +15,8 @@
                     <option value="">Select a type</option>
                     @foreach ($types as $type)
                         <option value="{{ $type->id }}" data-electric="{{ $type->name === 'electric_car' ? '1' : '0' }}"
+                            data-daily="{{ $type->daily_price }}" data-kwh="{{ $type->electricity_price_per_kwh }}"
+                            data-count="{{ $type->garages_count }}"
                             @selected(old('garage_type_id') == $type->id)>
                             {{ ucwords(str_replace('_', ' ', $type->name)) }} ({{ $type->code }})
                         </option>
@@ -34,6 +36,7 @@
                        @class(['field', 'border-red-600' => $errors->has('daily_price')])>
                 <x-field-error name="daily_price" />
                 <p class="mt-1.5 text-xs text-neutral-500">The monthly price is always 25 times the daily price.</p>
+                <p id="priceNotice" class="mt-1.5 hidden text-xs font-medium text-amber-700"></p>
             </div>
             <div id="electricityField" class="hidden">
                 <label for="electricity_price_per_kwh" class="field-label">Electricity price per kWh (Rp)</label>
@@ -77,16 +80,42 @@
 
 @push('scripts')
 <script>
-    // Show the electricity price field only for the electric car type.
     const typeSelect = document.getElementById('garage_type_id');
     const electricityField = document.getElementById('electricityField');
+    const dailyInput = document.getElementById('daily_price');
+    const kwhInput = document.getElementById('electricity_price_per_kwh');
+    const priceNotice = document.getElementById('priceNotice');
 
+    // Show the electricity price field only for the electric car type.
     function toggleElectricityField() {
         const selected = typeSelect.options[typeSelect.selectedIndex];
         electricityField.classList.toggle('hidden', ! (selected && selected.dataset.electric === '1'));
     }
 
-    typeSelect.addEventListener('change', toggleElectricityField);
+    // Warn that a new price also applies to garages that already exist.
+    // When "prefill" is true the form is filled with the price in effect now.
+    function showCurrentPrices(prefill) {
+        const selected = typeSelect.options[typeSelect.selectedIndex];
+        const count = selected ? Number(selected.dataset.count || 0) : 0;
+
+        if (prefill) {
+            dailyInput.value = selected?.dataset.daily || '';
+            kwhInput.value = selected?.dataset.kwh || '';
+        }
+
+        priceNotice.classList.toggle('hidden', count === 0);
+        priceNotice.textContent = count === 0
+            ? ''
+            : 'This type already has ' + count + ' garage(s). The price you enter applies to them as well.';
+    }
+
+    typeSelect.addEventListener('change', () => {
+        toggleElectricityField();
+        showCurrentPrices(true);
+    });
+
+    // On page load keep any values the admin typed before a validation error.
     toggleElectricityField();
+    showCurrentPrices(false);
 </script>
 @endpush
