@@ -8,6 +8,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Restricts a route to users with the given role (admin or renter).
+ *
+ * The role is read from the database record of the authenticated user, not
+ * from the JWT "role" claim. A token stays valid until it expires, so a claim
+ * can be outdated after a role change, while the database is always current.
+ * The claim is still issued so that clients can read the role without a query.
  */
 class EnsureRole
 {

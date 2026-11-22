@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GarageController;
 use App\Http\Controllers\Admin\RenterVerificationController;
 use App\Http\Controllers\Admin\RentalExtensionController;
@@ -23,7 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
-        Route::view('/dashboard', 'admin.dashboard')->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/garages/create', [GarageController::class, 'create'])->name('garages.create');
         Route::post('/garages', [GarageController::class, 'store'])->name('garages.store');

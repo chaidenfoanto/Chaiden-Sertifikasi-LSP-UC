@@ -289,10 +289,16 @@ class RentalService
     }
 
     /**
-     * Reuse the renter's vehicle by plate number, or create it. Bicycles
-     * have no plate, so each bicycle rental stores a new vehicle row.
+     * Find or create the vehicle for a rental.
+     *
+     * A plate number identifies one vehicle in the whole system. A renter may
+     * reuse their own vehicle, but cannot use a plate that belongs to another
+     * renter or change the type of an existing vehicle. Bicycles have no plate,
+     * so each bicycle rental stores a new vehicle row.
      *
      * @param array<string, mixed> $data
+     *
+     * @throws ValidationException When the plate conflicts with an existing vehicle.
      */
     private function resolveVehicle(User $renter, array $data): Vehicle
     {
@@ -309,7 +315,23 @@ class RentalService
             return $renter->vehicles()->create($attributes + ['plate_number' => null]);
         }
 
-        return $renter->vehicles()->updateOrCreate(['plate_number' => $data['plate_number']], $attributes);
+        $vehicle = Vehicle::where('plate_number', $data['plate_number'])->first();
+
+        if ($vehicle === null) {
+            return $renter->vehicles()->create($attributes + ['plate_number' => $data['plate_number']]);
+        }
+
+        if ((int) $vehicle->user_id !== (int) $renter->id) {
+            $this->fail('plate_number', 'This plate number is already registered to another account.');
+        }
+
+        if ($vehicle->type !== $data['vehicle_type']) {
+            $this->fail('plate_number', 'This plate number is already registered as a different vehicle type.');
+        }
+
+        $vehicle->update($attributes);
+
+        return $vehicle;
     }
 
     /**

@@ -197,4 +197,45 @@ class RentalServiceTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->service->extend($future, $this->day(8), $this->proof());
     }
+
+    public function test_renter_reuses_own_vehicle_when_the_plate_is_the_same(): void
+    {
+        $this->makeGarages(GarageType::CAR, 2, 100000);
+        $this->service->create($this->renter, $this->payload('C001'), $this->proof());
+        $this->service->create($this->renter, $this->payload('C002', ['start_date' => $this->day(10)]), $this->proof());
+
+        $this->assertSame(1, $this->renter->vehicles()->count());
+    }
+
+    public function test_plate_number_of_another_renter_is_rejected(): void
+    {
+        $this->makeGarages(GarageType::CAR, 2, 100000);
+        $this->service->create($this->renter, $this->payload('C001'), $this->proof());
+        $other = User::create([
+            'full_name' => 'Other Renter',
+            'nik' => '7371000000000002',
+            'phone_number' => '081234567891',
+            'email' => 'other@test.local',
+            'password' => 'password123',
+            'role' => User::ROLE_RENTER,
+            'status' => User::STATUS_APPROVED,
+        ]);
+
+        $this->expectException(ValidationException::class);
+        $this->service->create($other, $this->payload('C002'), $this->proof());
+    }
+
+    public function test_existing_plate_cannot_change_its_vehicle_type(): void
+    {
+        $this->makeGarages(GarageType::CAR, 2, 100000);
+        $this->service->create($this->renter, $this->payload('C001'), $this->proof());
+
+        $this->expectException(ValidationException::class);
+        $this->service->create($this->renter, $this->payload('C002', [
+            'vehicle_type' => 'electric_car',
+            'battery_capacity_kwh' => 60,
+            'remaining_battery_kwh' => 20,
+            'start_date' => $this->day(10),
+        ]), $this->proof());
+    }
 }
