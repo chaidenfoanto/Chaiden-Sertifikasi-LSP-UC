@@ -1,6 +1,7 @@
 @php
-    $navLink = 'px-3 py-2 text-sm transition hover:text-neutral-500';
-    $navClass = fn (bool $active): string => $navLink . ($active ? ' font-bold' : ' font-medium');
+    $navLink = 'relative self-start px-3 py-2 text-sm transition hover:text-neutral-500';
+    $navDot = ' font-bold after:absolute after:bottom-0.5 after:left-1/2 after:size-1.5 after:-translate-x-1/2 after:rounded-full after:bg-black';
+    $navClass = fn (bool $active): string => $navLink . ($active ? $navDot : ' font-medium');
     $isAdmin = auth()->check() && auth()->user()->isAdmin();
     $isRenter = auth()->check() && auth()->user()->isRenter();
     $dashboard = $isAdmin ? route('admin.dashboard') : null;
@@ -55,7 +56,7 @@
                 @auth
                     <details data-dropdown class="group relative">
                         <summary class="{{ $navClass(false) }} flex cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden">
-                            <span class="max-w-[7rem] truncate lg:max-w-[14rem]">{{ auth()->user()->full_name }}</span>
+                            <span class="max-w-28 truncate lg:max-w-56">{{ auth()->user()->full_name }}</span>
                             <svg class="size-4 shrink-0 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                         </summary>
                         <div class="mt-1 rounded-xl border border-neutral-200 bg-white p-2 shadow-lg md:absolute md:right-0 md:w-48">
@@ -73,9 +74,15 @@
 
 <main class="flex-1">
     @if (session('success'))
-        <div class="mx-auto max-w-6xl px-4 pt-6 sm:px-6">
-            <div role="status" class="rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-900">{{ session('success') }}</div>
+        <div id="toast" class="pointer-events-none fixed inset-x-0 top-4 z-100 flex justify-center px-4">
+            <div role="status" class="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-black shadow-lg">
+                <p class="flex-1">{{ session('success') }}</p>
+                <button type="button" aria-label="Close message" onclick="document.getElementById('toast')?.remove()" class="-mr-1 text-lg leading-none text-neutral-500 hover:text-black">&times;</button>
+            </div>
         </div>
+        <script>
+            setTimeout(() => document.getElementById('toast')?.remove(), 6000);
+        </script>
     @endif
 
     @yield('content')
