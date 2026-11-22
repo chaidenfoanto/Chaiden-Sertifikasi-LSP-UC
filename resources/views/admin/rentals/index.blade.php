@@ -1,101 +1,79 @@
-@extends('layouts.legacy')
+@extends('layouts.dashboard')
 
 @section('title', 'Extend Rentals')
+@section('heading', 'Extend Rentals')
 
-@section('content')
-<h1 class="h4 mb-3">Extend Rentals</h1>
+@section('body')
+<x-error-summary />
 
-@if ($errors->any())
-    <div class="alert alert-danger">
-        <ul class="mb-0">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
+<x-card>
+    <p class="mb-4 text-sm text-neutral-500">Only rentals that are active today are listed.</p>
 
-<div class="card shadow-sm">
-    <div class="card-body p-4">
-        <p class="text-muted small">Only rentals that are active today are listed.</p>
+    @if ($rentals->isEmpty())
+        <p class="text-neutral-500">There are no active rentals today.</p>
+    @else
+        <x-table>
+            <thead>
+                <tr>
+                    <th>Garage</th>
+                    <th>Renter</th>
+                    <th>Vehicle</th>
+                    <th>Period</th>
+                    <th class="text-right">Total</th>
+                    <th class="text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($rentals as $rental)
+                    <tr>
+                        <td>
+                            {{ $rental->garage->code }}
+                            <div class="text-xs text-neutral-500">{{ ucwords(str_replace('_', ' ', $rental->garage->type->name)) }}</div>
+                        </td>
+                        <td>{{ $rental->user->full_name }}</td>
+                        <td>
+                            {{ $rental->vehicle->brand }} {{ $rental->vehicle->model_name }}
+                            <div class="text-xs text-neutral-500">{{ $rental->vehicle->plate_number ?? 'No plate' }}</div>
+                        </td>
+                        <td class="whitespace-nowrap">{{ $rental->start_date->toDateString() }} to {{ $rental->end_date->toDateString() }}</td>
+                        <td class="text-right">Rp {{ number_format($rental->total_cost, 0, ',', '.') }}</td>
+                        <td class="text-right">
+                            <x-button size="sm" data-extend
+                                      data-id="{{ $rental->id }}"
+                                      data-garage="{{ $rental->garage->code }}"
+                                      data-end="{{ $rental->end_date->toDateString() }}">Extend</x-button>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </x-table>
+    @endif
+</x-card>
 
-        @if ($rentals->isEmpty())
-            <p class="text-muted mb-0">There are no active rentals today.</p>
-        @else
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th>Garage</th>
-                            <th>Renter</th>
-                            <th>Vehicle</th>
-                            <th>Period</th>
-                            <th class="text-end">Total</th>
-                            <th class="text-end">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($rentals as $rental)
-                            <tr>
-                                <td>
-                                    {{ $rental->garage->code }}
-                                    <div class="small text-muted">{{ ucwords(str_replace('_', ' ', $rental->garage->type->name)) }}</div>
-                                </td>
-                                <td>{{ $rental->user->full_name }}</td>
-                                <td>
-                                    {{ $rental->vehicle->brand }} {{ $rental->vehicle->model_name }}
-                                    <div class="small text-muted">{{ $rental->vehicle->plate_number ?? 'No plate' }}</div>
-                                </td>
-                                <td>{{ $rental->start_date->toDateString() }} to {{ $rental->end_date->toDateString() }}</td>
-                                <td class="text-end">Rp {{ number_format($rental->total_cost, 0, ',', '.') }}</td>
-                                <td class="text-end">
-                                    <button type="button" class="btn btn-dark btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#extendModal" data-id="{{ $rental->id }}"
-                                            data-garage="{{ $rental->garage->code }}"
-                                            data-end="{{ $rental->end_date->toDateString() }}">
-                                        Extend
-                                    </button>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </div>
-</div>
-
-<div class="modal fade" id="extendModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <form method="POST" enctype="multipart/form-data" id="extendForm" class="modal-content">
-            @csrf
-            <div class="modal-header">
-                <h2 class="modal-title h5">Extend rental</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-3">
-                    Garage <strong id="extendGarage"></strong>, current end date <strong id="extendCurrentEnd"></strong>
-                </p>
-                <div class="mb-3">
-                    <label for="new_end_date" class="form-label">New end date</label>
-                    <input type="date" id="new_end_date" name="new_end_date" class="form-control" required>
-                </div>
-                <div id="extendPreview" class="small text-muted mb-3">Pick a new end date to see the extra cost.</div>
-                <div class="mb-0">
-                    <label for="extend_payment_proof" class="form-label">Extra payment proof</label>
-                    <input type="file" id="extend_payment_proof" name="payment_proof" accept="image/png,image/jpeg"
-                           class="form-control" required>
-                    <div class="form-text">A jpg, jpeg, or png image, at most 5 MB.</div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-dark">Save extension</button>
-            </div>
-        </form>
-    </div>
-</div>
+<dialog id="extendModal" class="m-auto w-full max-w-md rounded-2xl border border-neutral-200 p-0 backdrop:bg-black/50">
+    <form method="POST" enctype="multipart/form-data" id="extendForm" class="space-y-4 p-6">
+        @csrf
+        <h2 class="font-display text-lg font-bold">Extend rental</h2>
+        <p class="text-sm">
+            Garage <strong id="extendGarage"></strong>, current end date <strong id="extendCurrentEnd"></strong>
+        </p>
+        <div>
+            <label for="new_end_date" class="field-label">New end date</label>
+            <input type="date" id="new_end_date" name="new_end_date" class="field" required>
+        </div>
+        <div id="extendPreview" class="text-sm text-neutral-500">Pick a new end date to see the extra cost.</div>
+        <div>
+            <label for="extend_payment_proof" class="field-label">Extra payment proof</label>
+            <input type="file" id="extend_payment_proof" name="payment_proof" accept="image/png,image/jpeg" required
+                   class="field file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm">
+            <p class="mt-1.5 text-xs text-neutral-500">A jpg, jpeg, or png image, at most 5 MB.</p>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+            <x-button variant="outline" data-close>Cancel</x-button>
+            <x-button type="submit">Save extension</x-button>
+        </div>
+    </form>
+</dialog>
 @endsection
 
 @push('scripts')
@@ -123,25 +101,29 @@
         }
 
         function setPreview(text, className) {
-            preview.className = 'small mb-3 ' + className;
+            preview.className = 'text-sm ' + className;
             preview.textContent = text;
         }
 
-        modal.addEventListener('show.bs.modal', (event) => {
-            const button = event.relatedTarget;
-            currentId = button.dataset.id;
+        document.querySelectorAll('[data-extend]').forEach((button) => {
+            button.addEventListener('click', () => {
+                currentId = button.dataset.id;
 
-            form.reset();
-            form.action = extendTemplate.replace('__ID__', currentId);
-            garageLabel.textContent = button.dataset.garage;
-            endLabel.textContent = button.dataset.end;
-            newEnd.min = addDay(button.dataset.end);
-            setPreview('Pick a new end date to see the extra cost.', 'text-muted');
+                form.reset();
+                form.action = extendTemplate.replace('__ID__', currentId);
+                garageLabel.textContent = button.dataset.garage;
+                endLabel.textContent = button.dataset.end;
+                newEnd.min = addDay(button.dataset.end);
+                setPreview('Pick a new end date to see the extra cost.', 'text-neutral-500');
+                modal.showModal();
+            });
         });
+
+        modal.querySelector('[data-close]').addEventListener('click', () => modal.close());
 
         newEnd.addEventListener('input', async () => {
             if (! newEnd.value) {
-                setPreview('Pick a new end date to see the extra cost.', 'text-muted');
+                setPreview('Pick a new end date to see the extra cost.', 'text-neutral-500');
                 return;
             }
 
@@ -154,12 +136,12 @@
 
                 if (response.status === 422) {
                     const body = await response.json();
-                    setPreview(Object.values(body.errors).flat()[0], 'text-danger');
+                    setPreview(Object.values(body.errors).flat()[0], 'text-red-600');
                     return;
                 }
 
                 if (! response.ok) {
-                    setPreview('The cost could not be calculated. Please try again.', 'text-danger');
+                    setPreview('The cost could not be calculated. Please try again.', 'text-red-600');
                     return;
                 }
 
@@ -170,11 +152,11 @@
 
                 setPreview(
                     data.extra_days + ' extra day(s) (' + parts + '). Additional cost ' + rupiah(data.additional_cost),
-                    'text-dark'
+                    'text-black'
                 );
             } catch (error) {
                 if (current === requestCounter) {
-                    setPreview('The cost could not be calculated. Check your connection.', 'text-danger');
+                    setPreview('The cost could not be calculated. Check your connection.', 'text-red-600');
                 }
             }
         });

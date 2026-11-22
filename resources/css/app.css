@@ -7,3 +7,33 @@
     --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
     --font-display: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
 }
+
+@layer components {
+    /* Shared form control (input, select, textarea) and its label. */
+    .field {
+        @apply w-full rounded-lg border border-neutral-300 bg-white px-3.5 py-2.5 text-sm outline-none transition;
+        @apply focus:border-black focus:ring-2 focus:ring-black/10;
+        @apply disabled:bg-neutral-100 disabled:text-neutral-500;
+    }
+
+    .field-label {
+        @apply mb-1.5 block text-sm font-semibold;
+    }
+
+    /* Data table used on the dashboard pages. */
+    .data-table {
+        @apply w-full text-left text-sm;
+    }
+
+    .data-table th {
+        @apply border-b border-neutral-200 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500;
+    }
+
+    .data-table td {
+        @apply border-b border-neutral-100 px-3 py-3 align-middle;
+    }
+
+    .data-table tfoot td {
+        @apply border-b-0 border-t border-neutral-200 font-semibold;
+    }
+}

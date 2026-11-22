@@ -6,6 +6,8 @@
         'light' => 'bg-white text-black hover:bg-neutral-200',
         'outline' => 'border border-neutral-300 text-black hover:bg-neutral-100',
         'outline-light' => 'border border-white/40 text-white hover:bg-white/10',
+        'success' => 'bg-green-700 text-white hover:bg-green-800',
+        'outline-danger' => 'border border-red-300 text-red-700 hover:bg-red-50',
     ];
     $sizes = [
         'sm' => 'px-3 py-2 text-xs',

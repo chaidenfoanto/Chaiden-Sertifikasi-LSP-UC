@@ -40,7 +40,7 @@
                 @auth
                     <a href="{{ $dashboard }}" class="{{ $navLink }} {{ request()->routeIs('admin.dashboard', 'renter.dashboard') ? 'bg-neutral-100' : '' }}">Dashboard</a>
                     <details data-dropdown class="group relative">
-                        <summary class="{{ $navLink }} flex cursor-pointer list-none items-center gap-1 [&::-webkit-details-marker]:hidden">
+                        <summary class="{{ $navLink }} cursor-pointer list-none items-center gap-1 [&::-webkit-details-marker]:hidden">
                             {{ auth()->user()->full_name }}
                             <svg class="size-4 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                         </summary>
@@ -106,5 +106,6 @@
         <p class="mt-10 border-t border-white/15 pt-6">&copy; {{ now()->year }} Garage Rental</p>
     </div>
 </footer>
+@stack('scripts')
 </body>
 </html>

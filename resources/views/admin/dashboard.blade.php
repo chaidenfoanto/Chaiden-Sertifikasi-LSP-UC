@@ -1,11 +1,10 @@
-@extends('layouts.legacy')
+@extends('layouts.dashboard')
 
 @section('title', 'Admin Dashboard')
+@section('heading', 'Admin Dashboard')
+@section('subtitle', 'Welcome, ' . auth()->user()->full_name . '.')
 
-@section('content')
-<h1 class="h4 mb-1">Admin Dashboard</h1>
-<p class="text-muted mb-4">Welcome, {{ auth()->user()->full_name }}.</p>
-
+@section('body')
 @php
     $cards = [
         ['Create Garages', 'Add garages in batches and set the prices per garage type.', route('admin.garages.create')],
@@ -15,17 +14,13 @@
     ];
 @endphp
 
-<div class="row g-3">
+<div class="grid gap-4 md:grid-cols-2">
     @foreach ($cards as [$title, $text, $url])
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h6">{{ $title }}</h2>
-                    <p class="text-muted small">{{ $text }}</p>
-                    <a href="{{ $url }}" class="btn btn-dark btn-sm">Open</a>
-                </div>
-            </div>
-        </div>
+        <x-card class="flex flex-col">
+            <h2 class="font-display font-bold">{{ $title }}</h2>
+            <p class="mb-4 mt-1 text-sm text-neutral-600">{{ $text }}</p>
+            <div class="mt-auto"><x-button :href="$url" size="sm">Open</x-button></div>
+        </x-card>
     @endforeach
 </div>
 @endsection

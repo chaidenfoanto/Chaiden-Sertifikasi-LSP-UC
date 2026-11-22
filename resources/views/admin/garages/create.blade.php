@@ -1,89 +1,77 @@
-@extends('layouts.legacy')
+@extends('layouts.dashboard')
 
 @section('title', 'Create Garages')
+@section('heading', 'Create Garages')
 
-@section('content')
-<h1 class="h4 mb-3">Create Garages</h1>
-
-<div class="row g-4">
-    <div class="col-lg-5">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <form method="POST" action="{{ route('admin.garages.store') }}">
-                    @csrf
-                    <div class="mb-3">
-                        <label for="garage_type_id" class="form-label">Garage type</label>
-                        <select id="garage_type_id" name="garage_type_id"
-                                class="form-select @error('garage_type_id') is-invalid @enderror" required>
-                            <option value="">Select a type</option>
-                            @foreach ($types as $type)
-                                <option value="{{ $type->id }}" data-electric="{{ $type->name === 'electric_car' ? '1' : '0' }}"
-                                    @selected(old('garage_type_id') == $type->id)>
-                                    {{ ucwords(str_replace('_', ' ', $type->name)) }} ({{ $type->code }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('garage_type_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="mb-3">
-                        <label for="quantity" class="form-label">Number of garages (1 to 999)</label>
-                        <input type="number" id="quantity" name="quantity" value="{{ old('quantity') }}" min="1" max="999"
-                               class="form-control @error('quantity') is-invalid @enderror" required>
-                        @error('quantity')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <div class="mb-3">
-                        <label for="daily_price" class="form-label">Daily rental price (Rp)</label>
-                        <input type="number" id="daily_price" name="daily_price" value="{{ old('daily_price') }}" min="1"
-                               class="form-control @error('daily_price') is-invalid @enderror" required>
-                        @error('daily_price')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        <div class="form-text">The monthly price is always 25 times the daily price.</div>
-                    </div>
-                    <div class="mb-3" id="electricityField" style="display: none;">
-                        <label for="electricity_price_per_kwh" class="form-label">Electricity price per kWh (Rp)</label>
-                        <input type="number" id="electricity_price_per_kwh" name="electricity_price_per_kwh"
-                               value="{{ old('electricity_price_per_kwh') }}" min="1"
-                               class="form-control @error('electricity_price_per_kwh') is-invalid @enderror">
-                        @error('electricity_price_per_kwh')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                    <button type="submit" class="btn btn-dark w-100">Create garages</button>
-                </form>
+@section('body')
+<div class="grid gap-6 lg:grid-cols-5">
+    <x-card class="lg:col-span-2">
+        <form method="POST" action="{{ route('admin.garages.store') }}" class="space-y-4">
+            @csrf
+            <div>
+                <label for="garage_type_id" class="field-label">Garage type</label>
+                <select id="garage_type_id" name="garage_type_id" required
+                        @class(['field', 'border-red-600' => $errors->has('garage_type_id')])>
+                    <option value="">Select a type</option>
+                    @foreach ($types as $type)
+                        <option value="{{ $type->id }}" data-electric="{{ $type->name === 'electric_car' ? '1' : '0' }}"
+                            @selected(old('garage_type_id') == $type->id)>
+                            {{ ucwords(str_replace('_', ' ', $type->name)) }} ({{ $type->code }})
+                        </option>
+                    @endforeach
+                </select>
+                <x-field-error name="garage_type_id" />
             </div>
-        </div>
-    </div>
-
-    <div class="col-lg-7">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h2 class="h6 mb-3">Garage types</h2>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th>Type</th>
-                                <th>Garages</th>
-                                <th>Used</th>
-                                <th>Daily</th>
-                                <th>Monthly</th>
-                                <th>Per kWh</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($types as $type)
-                                <tr>
-                                    <td>{{ ucwords(str_replace('_', ' ', $type->name)) }} ({{ $type->code }})</td>
-                                    <td>{{ $type->garages_count }}</td>
-                                    <td>{{ $type->used_garages_count }}</td>
-                                    <td>{{ $type->daily_price === null ? '-' : 'Rp ' . number_format($type->daily_price, 0, ',', '.') }}</td>
-                                    <td>{{ $type->monthly_price === null ? '-' : 'Rp ' . number_format($type->monthly_price, 0, ',', '.') }}</td>
-                                    <td>{{ $type->electricity_price_per_kwh === null ? '-' : 'Rp ' . number_format($type->electricity_price_per_kwh, 0, ',', '.') }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+            <div>
+                <label for="quantity" class="field-label">Number of garages (1 to 999)</label>
+                <input type="number" id="quantity" name="quantity" value="{{ old('quantity') }}" min="1" max="999" required
+                       @class(['field', 'border-red-600' => $errors->has('quantity')])>
+                <x-field-error name="quantity" />
             </div>
-        </div>
-    </div>
+            <div>
+                <label for="daily_price" class="field-label">Daily rental price (Rp)</label>
+                <input type="number" id="daily_price" name="daily_price" value="{{ old('daily_price') }}" min="1" required
+                       @class(['field', 'border-red-600' => $errors->has('daily_price')])>
+                <x-field-error name="daily_price" />
+                <p class="mt-1.5 text-xs text-neutral-500">The monthly price is always 25 times the daily price.</p>
+            </div>
+            <div id="electricityField" class="hidden">
+                <label for="electricity_price_per_kwh" class="field-label">Electricity price per kWh (Rp)</label>
+                <input type="number" id="electricity_price_per_kwh" name="electricity_price_per_kwh"
+                       value="{{ old('electricity_price_per_kwh') }}" min="1"
+                       @class(['field', 'border-red-600' => $errors->has('electricity_price_per_kwh')])>
+                <x-field-error name="electricity_price_per_kwh" />
+            </div>
+            <x-button type="submit" class="w-full">Create garages</x-button>
+        </form>
+    </x-card>
+
+    <x-card title="Garage types" class="lg:col-span-3">
+        <x-table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Garages</th>
+                    <th>Used</th>
+                    <th>Daily</th>
+                    <th>Monthly</th>
+                    <th>Per kWh</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($types as $type)
+                    <tr>
+                        <td>{{ ucwords(str_replace('_', ' ', $type->name)) }} ({{ $type->code }})</td>
+                        <td>{{ $type->garages_count }}</td>
+                        <td>{{ $type->used_garages_count }}</td>
+                        <td>{{ $type->daily_price === null ? '-' : 'Rp ' . number_format($type->daily_price, 0, ',', '.') }}</td>
+                        <td>{{ $type->monthly_price === null ? '-' : 'Rp ' . number_format($type->monthly_price, 0, ',', '.') }}</td>
+                        <td>{{ $type->electricity_price_per_kwh === null ? '-' : 'Rp ' . number_format($type->electricity_price_per_kwh, 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </x-table>
+    </x-card>
 </div>
 @endsection
 
@@ -95,7 +83,7 @@
 
     function toggleElectricityField() {
         const selected = typeSelect.options[typeSelect.selectedIndex];
-        electricityField.style.display = selected && selected.dataset.electric === '1' ? 'block' : 'none';
+        electricityField.classList.toggle('hidden', ! (selected && selected.dataset.electric === '1'));
     }
 
     typeSelect.addEventListener('change', toggleElectricityField);
