@@ -197,7 +197,7 @@ Akun admin dibuat oleh seeder. Tidak ada pendaftaran admin.
 
 | Email | Password |
 |---|---|
-| `admin@garage.test` | `admin12345` |
+| `admin.chaiden@gmail.com` | `superadmin` |
 
 Penyewa mendaftar sendiri lewat halaman Register, lalu disetujui admin sebelum bisa login.
 
