@@ -67,16 +67,22 @@
                     <button type="button" data-rental-type="monthly"
                             class="rounded-lg border px-4 py-2 text-sm font-semibold">Monthly</button>
                 </div>
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="grid gap-4 md:grid-cols-3">
                     <div>
                         <label for="start_date" class="field-label">Start date</label>
                         <input type="date" id="start_date" name="start_date"
                             value="{{ old('start_date', now()->toDateString()) }}"
                             min="{{ now()->toDateString() }}" class="field" required>
                     </div>
-                    <div id="endDateGroup">
-                        <label for="end_date" class="field-label">End date</label>
-                        <input type="date" id="end_date" name="end_date" value="{{ old('end_date') }}" class="field">
+                    <div id="daysGroup">
+                        <label for="days" class="field-label">Number of days</label>
+                        <input type="number" id="days" name="days" value="{{ old('days') }}"
+                            min="1" step="1" inputmode="numeric" class="field" required>
+                    </div>
+                    <div>
+                        <label for="end_date" class="field-label">End date (automatic)</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ old('end_date') }}"
+                            class="field bg-neutral-100 text-neutral-600" readonly tabindex="-1">
                     </div>
                 </div>
                 <p id="periodHint" class="mt-3 text-xs text-neutral-500"></p>
@@ -139,7 +145,8 @@
         const typeButtons = document.querySelectorAll('[data-rental-type]');
         const startDate = byId('start_date');
         const endDate = byId('end_date');
-        const endDateGroup = byId('endDateGroup');
+        const daysGroup = byId('daysGroup');
+        const daysInput = byId('days');
         const periodHint = byId('periodHint');
         const previewMessage = byId('previewMessage');
         const previewContent = byId('previewContent');
@@ -221,11 +228,13 @@
                 button.classList.toggle('border-neutral-300', ! active);
             });
 
-            endDateGroup.classList.toggle('hidden', monthly);
+            daysGroup.classList.toggle('hidden', monthly);
+            daysInput.disabled = monthly;
+            daysInput.required = ! monthly;
             endDate.disabled = monthly;
-            endDate.required = ! monthly;
 
             if (! startDate.value) {
+                endDate.value = '';
                 periodHint.textContent = '';
                 return;
             }
@@ -235,19 +244,19 @@
             const monthName = start.toLocaleString('en-US', { month: 'long', timeZone: 'UTC' });
 
             if (monthly) {
+                endDate.value = toIso(addDays(start, monthDays - 1));
                 periodHint.textContent = 'A monthly rental that starts in ' + monthName + ' lasts ' + monthDays
-                    + ' days and ends on ' + toIso(addDays(start, monthDays - 1))
-                    + '. It costs 25 times the daily price.';
+                    + ' days and ends on ' + endDate.value + '. It costs 25 times the daily price.';
                 return;
             }
 
             const maxDays = monthDays - 1;
-            const latest = toIso(addDays(start, maxDays - 1));
-            endDate.min = startDate.value;
-            endDate.max = latest;
+            const days = Number.parseInt(daysInput.value, 10);
+
+            daysInput.max = maxDays;
+            endDate.value = Number.isInteger(days) && days >= 1 ? toIso(addDays(start, days - 1)) : '';
             periodHint.textContent = 'A daily rental that starts in ' + monthName + ' can last at most ' + maxDays
-                + ' days, so the latest end date is ' + latest + '. For a longer stay, save this rental and make'
-                + ' another one that starts the day after it ends.';
+                + ' days. For a longer stay, save this rental and make another one that starts the day after it ends.';
         }
 
         function buildQuery() {
@@ -395,7 +404,7 @@
             timer = setTimeout(loadQuote, 300);
         }
 
-        [vehicleType, startDate, endDate, batteryCapacity, batteryRemaining].forEach((field) => {
+        [vehicleType, startDate, daysInput, batteryCapacity, batteryRemaining].forEach((field) => {
             field.addEventListener('input', () => {
                 syncFields();
                 schedule();
