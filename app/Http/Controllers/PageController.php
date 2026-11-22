@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GarageType;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 /**
@@ -24,9 +25,14 @@ class PageController extends Controller
     /**
      * Features page. Visitors see a locked preview, users see their own menu.
      */
-    public function features(): View
+    public function features(): View|RedirectResponse
     {
         $user = auth()->user();
+
+        // Admins work from the dashboard, which already shows their overview and links.
+        if ($user?->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
 
         return view('features', [
             'groups' => $this->featureGroups($user),
@@ -84,7 +90,6 @@ class PageController extends Controller
         ];
 
         return match (true) {
-            $user?->isAdmin() => [$admin],
             $user?->isRenter() => [$renter],
             default => [$renter, $admin],
         };

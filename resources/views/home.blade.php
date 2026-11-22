@@ -10,43 +10,50 @@
         'electric_car' => 'Electric car, charged to full',
     ];
     $rupiah = fn (?int $amount): string => $amount === null ? 'Not set yet' : 'Rp ' . number_format($amount, 0, ',', '.');
-    $totalGarages = $garageTypes->sum('garages_count');
-    $minPrice = $garageTypes->whereNotNull('daily_price')->min('daily_price');
     $isAdmin = auth()->check() && auth()->user()->isAdmin();
     $memberUrl = $isAdmin ? route('admin.dashboard') : route('renter.rentals.create');
     $memberLabel = $isAdmin ? 'Go to dashboard' : 'Start a rental';
-    $stats = array_filter([
-        $totalGarages > 0 ? [$totalGarages, 'Garages'] : null,
-        [$garageTypes->count(), 'Garage types'],
-        $minPrice !== null ? [$rupiah($minPrice), 'Starting price per day'] : null,
-    ]);
 @endphp
 
-<section class="bg-black text-white">
-    <div class="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-20">
-        <div>
-            <h1 class="font-display text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl">Rent a garage for your vehicle</h1>
-            <p class="mt-5 max-w-lg text-neutral-300">Choose your vehicle and dates, see the full cost before you pay, and keep a garage reserved for the whole period.</p>
-            <div class="mt-8 flex flex-wrap gap-3">
-                @guest
-                    <x-button :href="route('register')" variant="light" size="lg">Register</x-button>
-                    <x-button :href="route('login')" variant="outline-light" size="lg">Login</x-button>
-                @endguest
-                @auth
-                    <x-button :href="$memberUrl" variant="light" size="lg">{{ $memberLabel }}</x-button>
-                @endauth
-                <x-button :href="route('features')" variant="outline-light" size="lg">See features</x-button>
+<section class="bg-white">
+    <div class="mx-auto max-w-6xl px-4 pb-12 pt-12 sm:px-6 lg:pt-20">
+        <div class="grid items-center gap-10 lg:grid-cols-2">
+            <div>
+                <h1 class="font-display text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">Rent a garage<br>for your vehicle</h1>
+                <p class="mt-5 max-w-md text-neutral-600">Choose your vehicle and dates, see the full cost before you pay, and keep a garage reserved for the whole period.</p>
+                <div class="mt-8 flex flex-wrap gap-3">
+                    @guest
+                        <x-button :href="route('register')" size="lg">Register</x-button>
+                        <x-button :href="route('login')" variant="outline" size="lg">Login</x-button>
+                    @endguest
+                    @auth
+                        <x-button :href="$memberUrl" size="lg">{{ $memberLabel }}</x-button>
+                    @endauth
+                    @unless ($isAdmin)
+                        <x-button :href="route('features')" variant="outline" size="lg">See features</x-button>
+                    @endunless
+                </div>
             </div>
-            <div class="mt-10 flex flex-wrap gap-x-10 gap-y-4 border-t border-white/15 pt-6">
-                @foreach ($stats as [$value, $label])
-                    <div>
-                        <p class="font-display text-2xl font-bold">{{ $value }}</p>
-                        <p class="text-sm text-neutral-400">{{ $label }}</p>
-                    </div>
-                @endforeach
+
+            <div class="relative mx-auto aspect-4/3 w-full max-w-xl">
+                {{-- Fallback illustration, removed as soon as public/images/hero.webp loads. --}}
+                <svg data-hero-fallback viewBox="0 0 480 360" fill="none" class="absolute inset-0 size-full" aria-hidden="true">
+                    <circle cx="250" cy="180" r="150" fill="#f5f5f5"/>
+                    <path d="M70 150 250 62l180 88v138H70z" fill="#e5e5e5"/>
+                    <rect x="120" y="176" width="260" height="112" rx="6" fill="#fafafa" stroke="#d4d4d4" stroke-width="3"/>
+                    <path d="M120 204h260M120 232h260M120 260h260" stroke="#e5e5e5" stroke-width="3"/>
+                    <path d="M110 300c0-16 9-27 25-31l36-10 30-31h96l40 32 36 8c12 3 18 11 18 23v9z" fill="#262626"/>
+                    <path d="M196 262l20-22h72l28 24z" fill="#e5e5e5"/>
+                    <circle cx="175" cy="302" r="21" fill="#fff" stroke="#262626" stroke-width="9"/>
+                    <circle cx="345" cy="302" r="21" fill="#fff" stroke="#262626" stroke-width="9"/>
+                    <path d="M40 316h400" stroke="#e5e5e5" stroke-width="4" stroke-linecap="round"/>
+                </svg>
+                <img src="{{ asset('images/hero.webp') }}" alt="Garage for your vehicle" width="1200" height="900" fetchpriority="high"
+                     class="absolute inset-0 size-full object-contain"
+                     onload="this.parentElement.querySelector('[data-hero-fallback]')?.remove()"
+                     onerror="this.remove()">
             </div>
         </div>
-        <x-media src="images/hero.webp" :priority="true" class="rounded-2xl" />
     </div>
 </section>
 
@@ -133,18 +140,18 @@
 </section>
 
 <section class="mx-auto max-w-6xl px-4 pb-16 sm:px-6">
-    <div class="flex flex-col gap-6 rounded-3xl bg-black p-8 text-white sm:p-12 md:flex-row md:items-center md:justify-between">
+    <div class="flex flex-col gap-6 rounded-3xl bg-neutral-100 p-8 sm:p-12 md:flex-row md:items-center md:justify-between">
         <div>
             <h2 class="font-display text-3xl font-bold tracking-tight">Ready to reserve a garage?</h2>
-            <p class="mt-2 text-neutral-300">Create an account and start your first rental once an admin approves it.</p>
+            <p class="mt-2 text-neutral-600">Create an account and start your first rental once an admin approves it.</p>
         </div>
         <div class="flex flex-wrap gap-3">
             @guest
-                <x-button :href="route('register')" variant="light" size="lg">Register</x-button>
-                <x-button :href="route('login')" variant="outline-light" size="lg">Login</x-button>
+                <x-button :href="route('register')" size="lg">Register</x-button>
+                <x-button :href="route('login')" variant="outline" size="lg">Login</x-button>
             @endguest
             @auth
-                <x-button :href="$memberUrl" variant="light" size="lg">{{ $memberLabel }}</x-button>
+                <x-button :href="$memberUrl" size="lg">{{ $memberLabel }}</x-button>
             @endauth
         </div>
     </div>

@@ -46,6 +46,18 @@ class PublicPagesTest extends TestCase
             ->assertSee('Log in or register to unlock these features.');
     }
 
+    public function test_login_and_register_pages_have_no_footer(): void
+    {
+        $this->get(route('login'))->assertOk()->assertDontSee('Garages for bicycles, motorcycles');
+        $this->get(route('register'))->assertOk()->assertDontSee('Garages for bicycles, motorcycles');
+    }
+
+    public function test_home_and_features_pages_keep_the_footer(): void
+    {
+        $this->get('/')->assertOk()->assertSee('Garages for bicycles, motorcycles');
+        $this->get('/features')->assertOk()->assertSee('Garages for bicycles, motorcycles');
+    }
+
     public function test_renter_sees_only_renter_features_without_overlay(): void
     {
         $this->actingAs($this->makeUser(User::ROLE_RENTER))
@@ -56,13 +68,20 @@ class PublicPagesTest extends TestCase
             ->assertDontSee('Log in or register to unlock these features.');
     }
 
-    public function test_admin_sees_only_admin_features_without_overlay(): void
+    public function test_admin_is_redirected_from_features_to_the_dashboard(): void
     {
         $this->actingAs($this->makeUser(User::ROLE_ADMIN))
             ->get('/features')
+            ->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_admin_can_still_view_the_public_home_page(): void
+    {
+        $this->seed(GarageTypeSeeder::class);
+
+        $this->actingAs($this->makeUser(User::ROLE_ADMIN))
+            ->get('/')
             ->assertOk()
-            ->assertSee('Create garages')
-            ->assertDontSee('New rental')
-            ->assertDontSee('Log in or register to unlock these features.');
+            ->assertSee('Go to dashboard');
     }
 }
