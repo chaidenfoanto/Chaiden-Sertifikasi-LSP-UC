@@ -37,7 +37,7 @@ Bagian soal yang ambigu diputuskan sebagai berikut.
 - Satu input sewa maksimal satu bulan (penjelasan dosen). Sewa harian memilih tanggal mulai dan tanggal selesai, maksimal sebanyak jumlah hari pada bulan tanggal mulai dikurangi satu (November 29 hari walaupun mulai tanggal 15). Sewa bulanan hanya memilih tanggal mulai dan berlangsung sebanyak jumlah hari pada bulan tanggal mulai (November 30 hari, Desember 31 hari). Sewa lebih panjang dibuat dengan dua kali input, misalnya 33 hari menjadi 1 bulanan ditambah 3 harian.
 - Biaya isi listrik dihitung per input sewa.
 - Perpanjangan oleh admin diterapkan pada sewa terakhir dari rangkaian sewa yang sama (penyewa dan garasi sama, tiap sewa mulai sehari setelah sewa sebelumnya berakhir). Hari tambahan dihitung harian, dan satu bulan penuh tambahan dihitung bulanan.
-- Satu transaksi sewa terdiri dari beberapa item sewa, dengan satu kali upload bukti bayar untuk total transaksi.
+- Setiap input sewa disimpan sebagai satu sewa dengan satu kali upload bukti bayar. Perpanjangan menambah item sewa baru pada sewa yang sama.
 - Perpanjangan hanya untuk sewa yang aktif pada hari berjalan, dan tanggal selesai baru harus lebih besar dari tanggal selesai lama.
 - Penyewa baru bisa login setelah disetujui. Jika ditolak, tampil pesan yang jelas di halaman login.
 - Tanggal mulai sewa terisi hari ini secara bawaan dan boleh dimajukan ke tanggal ke depan (penjelasan dosen saat zoom), tetapi tidak boleh mundur.

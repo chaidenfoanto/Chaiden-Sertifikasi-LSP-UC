@@ -186,6 +186,7 @@
             const bicycle = vehicleType.value === 'bicycle';
             plateGroup.classList.toggle('hidden', bicycle);
             plateInput.disabled = bicycle;
+            plateInput.required = ! bicycle;
 
             batteryGroup.classList.toggle('hidden', ! isElectric());
             batteryCapacity.disabled = ! isElectric();

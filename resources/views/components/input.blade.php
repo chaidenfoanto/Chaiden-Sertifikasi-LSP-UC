@@ -1,6 +1,6 @@
 @props(['name', 'label', 'type' => 'text'])
 <div>
-    <label for="{{ $name }}" class="mb-1.5 block text-sm font-semibold">{{ $label }}</label>
+    <label for="{{ $name }}" class="field-label">{{ $label }}</label>
     <input id="{{ $name }}" name="{{ $name }}" type="{{ $type }}" required
         @if ($type !== 'password') value="{{ old($name) }}" @endif
         {{ $attributes->class([

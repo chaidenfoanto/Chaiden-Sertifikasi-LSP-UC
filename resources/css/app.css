@@ -20,6 +20,12 @@
         @apply mb-1.5 block text-sm font-semibold;
     }
 
+    /* Red asterisk for any label followed directly by an enabled required control. */
+    .field-label:has(+ :required:not(:disabled))::after {
+        content: ' *';
+        color: #dc2626;
+    }
+
     /* Data table used on the dashboard pages. */
     .data-table {
         @apply w-full text-left text-sm;

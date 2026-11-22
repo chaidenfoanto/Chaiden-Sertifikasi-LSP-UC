@@ -89,7 +89,10 @@
     // Show the electricity price field only for the electric car type.
     function toggleElectricityField() {
         const selected = typeSelect.options[typeSelect.selectedIndex];
-        electricityField.classList.toggle('hidden', ! (selected && selected.dataset.electric === '1'));
+        const electric = !! selected && selected.dataset.electric === '1';
+
+        electricityField.classList.toggle('hidden', ! electric);
+        kwhInput.required = electric;
     }
 
     // Warn that a new price also applies to garages that already exist.
