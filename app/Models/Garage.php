@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -36,14 +35,5 @@ class Garage extends Model
     public function rentals(): HasMany
     {
         return $this->hasMany(Rental::class);
-    }
-
-    /**
-     * Determine whether the garage is rented on the given day.
-     * This reads the rentals table, not the status column.
-     */
-    public function isUsedOn(CarbonInterface $date): bool
-    {
-        return $this->rentals()->activeOn($date)->exists();
     }
 }

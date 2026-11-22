@@ -198,4 +198,28 @@ class RentalRequestValidationTest extends TestCase
         $this->submit(['payment_proof' => UploadedFile::fake()->image('proof.png')->size(5121)])
             ->assertSessionHasErrors(['payment_proof' => 'The payment proof may not be larger than 5 MB.']);
     }
+
+    public function test_start_date_in_the_past_is_rejected(): void
+    {
+        $this->submit(['start_date' => now()->subDay()->toDateString()])
+            ->assertSessionHasErrors('start_date');
+    }
+
+    public function test_start_date_of_today_is_accepted(): void
+    {
+        $this->submit(['start_date' => now()->toDateString()])
+            ->assertSessionDoesntHaveErrors('start_date');
+    }
+
+    public function test_start_date_in_the_future_is_accepted(): void
+    {
+        $this->submit(['start_date' => now()->addWeek()->toDateString()])
+            ->assertSessionDoesntHaveErrors('start_date');
+    }
+
+    public function test_start_date_must_use_the_year_month_day_format(): void
+    {
+        $this->submit(['start_date' => '25/11/2026'])
+            ->assertSessionHasErrors('start_date');
+    }
 }

@@ -74,7 +74,9 @@
                     </div>
                     <div>
                         <label for="start_date" class="field-label">Start date</label>
-                        <input type="text" id="start_date" value="{{ now()->toDateString() }}" class="field" readonly>
+                        <input type="date" id="start_date" name="start_date"
+                            value="{{ old('start_date', now()->toDateString()) }}"
+                            min="{{ now()->toDateString() }}" class="field" required>
                     </div>
                 </div>
                 <p class="mt-3 text-xs text-neutral-500">
@@ -139,6 +141,7 @@
         const rentalType = byId('rental_type');
         const quantity = byId('quantity');
         const quantityLabel = byId('quantityLabel');
+        const startDate = byId('start_date');
         const previewMessage = byId('previewMessage');
         const previewContent = byId('previewContent');
         const previewDates = byId('previewDates');
@@ -201,6 +204,7 @@
             params.set('vehicle_type', vehicleType.value);
             params.set('rental_type', rentalType.value);
             params.set('quantity', quantity.value);
+            if (startDate.value) params.set('start_date', startDate.value);
             if (isElectric()) {
                 if (batteryCapacity.value) params.set('battery_capacity_kwh', batteryCapacity.value);
                 if (batteryRemaining.value) params.set('remaining_battery_kwh', batteryRemaining.value);
@@ -340,7 +344,7 @@
             timer = setTimeout(loadQuote, 300);
         }
 
-        [vehicleType, rentalType, quantity, batteryCapacity, batteryRemaining].forEach((field) => {
+        [vehicleType, rentalType, quantity, startDate, batteryCapacity, batteryRemaining].forEach((field) => {
             field.addEventListener('input', () => {
                 syncFields();
                 schedule();

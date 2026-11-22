@@ -36,6 +36,7 @@ class QuoteRentalRequest extends FormRequest
             'vehicle_type' => ['required', Rule::in(Vehicle::TYPES)],
             'rental_type' => ['required', Rule::in([RentalItem::DAILY, RentalItem::MONTHLY])],
             'quantity' => ['required', 'integer', 'min:1', 'max:' . $maxQuantity],
+            'start_date' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:today'],
             'battery_capacity_kwh' => ['nullable', 'numeric', 'gt:0', 'max:500'],
             'remaining_battery_kwh' => ['nullable', 'numeric', 'gte:0'],
         ];
