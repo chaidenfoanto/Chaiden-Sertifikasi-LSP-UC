@@ -35,7 +35,8 @@ class AuthController extends Controller
         User::create([
             'full_name' => $data['full_name'],
             'nik' => $data['nik'],
-            'phone_number' => $data['phone_number'],
+            // The form sends only the number after the fixed +62 prefix.
+            'phone_number' => '+62' . $data['phone_number'],
             'email' => $data['email'],
             'password' => $data['password'],
             'role' => User::ROLE_RENTER,

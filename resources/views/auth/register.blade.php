@@ -18,10 +18,23 @@
             <p class="mb-8 mt-1 text-neutral-600">It takes a minute. Approval is done by an admin.</p>
             <form method="POST" action="{{ route('register.store') }}" class="space-y-5">
                 @csrf
-                <x-input name="full_name" label="Full name" />
+                <x-input name="full_name" label="Full name (used as username)" />
                 <x-input name="nik" label="NIK (16 digits)" maxlength="16" inputmode="numeric" />
-                <x-input name="phone_number" label="Phone number" type="tel" />
-                <x-input name="email" label="Email (used as username)" type="email" />
+                <div>
+                    <label for="phone_number" class="field-label">Phone number</label>
+                    <div class="input-group flex">
+                        <span class="flex select-none items-center rounded-l-lg border border-r-0 border-neutral-300 bg-neutral-100 px-3.5 text-sm font-semibold text-neutral-600">+62</span>
+                        <input id="phone_number" name="phone_number" type="tel" required
+                            value="{{ old('phone_number') }}" placeholder="812-3456-7890"
+                            maxlength="20" inputmode="numeric" autocomplete="tel-national"
+                            @class(['field min-w-0 flex-1 rounded-l-none', 'border-red-600' => $errors->has('phone_number')])>
+                    </div>
+                    <p class="mt-1.5 text-xs text-neutral-500">Enter the number after +62, without the leading 0.</p>
+                    @error('phone_number')
+                        <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+                <x-input name="email" label="Email" type="email" />
                 <x-input name="password" label="Password (min. 8 characters)" type="password" />
                 <x-input name="password_confirmation" label="Confirm password" type="password" />
                 <x-button type="submit" class="w-full">Register</x-button>

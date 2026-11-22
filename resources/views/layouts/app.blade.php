@@ -56,7 +56,7 @@
                 @auth
                     <details data-dropdown class="group relative">
                         <summary class="{{ $navClass(false) }} flex cursor-pointer list-none items-center gap-1.5 [&::-webkit-details-marker]:hidden">
-                            <span class="max-w-28 truncate lg:max-w-56">{{ auth()->user()->full_name }}</span>
+                            <span title="{{ auth()->user()->full_name }}">{{ \Illuminate\Support\Str::limit(auth()->user()->full_name, 19) }}</span>
                             <svg class="size-4 shrink-0 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6"/></svg>
                         </summary>
                         <div class="mt-1 rounded-xl border border-neutral-200 bg-white p-2 shadow-lg md:absolute md:right-0 md:w-48">

@@ -45,6 +45,8 @@ class AuthFlowTest extends TestCase
             'nik too short' => [['nik' => '12345'], 'nik'],
             'nik with letters' => [['nik' => '73710000000000AB'], 'nik'],
             'phone with letters' => [['phone_number' => '08ab'], 'phone_number'],
+            'phone not starting with 8' => [['phone_number' => '712345678901'], 'phone_number'],
+            'phone too short' => [['phone_number' => '8123'], 'phone_number'],
             'invalid email' => [['email' => 'not-an-email'], 'email'],
             'password too short' => [['password' => 'short', 'password_confirmation' => 'short'], 'password'],
             'password not confirmed' => [['password_confirmation' => 'different'], 'password'],
@@ -84,6 +86,34 @@ class AuthFlowTest extends TestCase
             ->assertSessionHasErrors($field);
 
         $this->assertDatabaseMissing('users', ['email' => 'siti@test.local']);
+    }
+
+    /**
+     * Phone numbers typed in different ways.
+     *
+     * @return array<string, array{0: string}>
+     */
+    public static function phoneFormats(): array
+    {
+        return [
+            'with dashes' => ['812-3456-7890'],
+            'with spaces' => ['812 3456 7890'],
+            'with leading zero' => ['081234567890'],
+            'with country code' => ['6281234567890'],
+            'with plus and country code' => ['+6281234567890'],
+        ];
+    }
+
+    #[DataProvider('phoneFormats')]
+    public function test_phone_number_is_saved_with_the_62_prefix(string $typed): void
+    {
+        $this->post(route('register.store'), $this->registrationData(['phone_number' => $typed]))
+            ->assertRedirect(route('login'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'siti@test.local',
+            'phone_number' => '+6281234567890',
+        ]);
     }
 
     public function test_registration_rejects_a_nik_that_is_already_used(): void

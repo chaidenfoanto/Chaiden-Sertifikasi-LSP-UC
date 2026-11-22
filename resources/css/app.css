@@ -21,7 +21,8 @@
     }
 
     /* Red asterisk for any label followed directly by an enabled required control. */
-    .field-label:has(+ :required:not(:disabled))::after {
+    .field-label:has(+ :required:not(:disabled))::after,
+    .field-label:has(+ .input-group :required:not(:disabled))::after {
         content: ' *';
         color: #dc2626;
     }
