@@ -20,6 +20,7 @@
                     <th>Vehicle</th>
                     <th>Period</th>
                     <th class="text-right">Total</th>
+                    <th>Payment proof</th>
                     <th class="text-right">Action</th>
                 </tr>
             </thead>
@@ -37,6 +38,7 @@
                         </td>
                         <td class="whitespace-nowrap">{{ $rental->start_date->toDateString() }} to {{ $rental->end_date->toDateString() }}</td>
                         <td class="text-right">Rp {{ number_format($rental->total_cost, 0, ',', '.') }}</td>
+                        <td><x-proof-links :rental="$rental" /></td>
                         <td class="text-right">
                             <x-button size="sm" data-extend
                                       data-id="{{ $rental->id }}"

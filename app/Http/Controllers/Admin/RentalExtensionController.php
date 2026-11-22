@@ -23,7 +23,7 @@ class RentalExtensionController extends Controller
     public function index(): View
     {
         $rentals = Rental::activeOn(CarbonImmutable::today())
-            ->with(['user', 'vehicle', 'garage.type'])
+            ->with(['user', 'vehicle', 'garage.type', 'extensions'])
             ->orderBy('end_date')
             ->get();
 

@@ -75,13 +75,20 @@ class PublicPagesTest extends TestCase
             ->assertRedirect(route('admin.dashboard'));
     }
 
-    public function test_admin_can_still_view_the_public_home_page(): void
+    public function test_admin_is_redirected_from_home_to_the_dashboard(): void
+    {
+        $this->actingAs($this->makeUser(User::ROLE_ADMIN))
+            ->get('/')
+            ->assertRedirect(route('admin.dashboard'));
+    }
+
+    public function test_renter_still_sees_the_home_page(): void
     {
         $this->seed(GarageTypeSeeder::class);
 
-        $this->actingAs($this->makeUser(User::ROLE_ADMIN))
+        $this->actingAs($this->makeUser(User::ROLE_RENTER))
             ->get('/')
             ->assertOk()
-            ->assertSee('Go to dashboard');
+            ->assertSee('Start a rental');
     }
 }

@@ -15,8 +15,13 @@ class PageController extends Controller
     /**
      * Home page with the hero, garage types with prices, and how it works.
      */
-    public function home(): View
+    public function home(): View|RedirectResponse
     {
+        // Admins work from the dashboard, so the public home page sends them there.
+        if (auth()->user()?->isAdmin()) {
+            return redirect()->route('admin.dashboard');
+        }
+
         $garageTypes = GarageType::withCount('garages')->orderBy('code')->get();
 
         return view('home', compact('garageTypes'));

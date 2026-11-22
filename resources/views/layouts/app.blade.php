@@ -1,6 +1,6 @@
 @php
     $navLink = 'relative self-start px-3 py-2 text-sm transition hover:text-neutral-500';
-    $navDot = ' font-bold after:absolute after:bottom-0.5 after:left-1/2 after:size-1.5 after:-translate-x-1/2 after:rounded-full after:bg-black';
+    $navDot = ' font-bold after:absolute after:bottom-0.5 after:left-1/2 after:h-0.5 after:w-5 after:-translate-x-1/2 after:rounded-full after:bg-black';
     $navClass = fn (bool $active): string => $navLink . ($active ? $navDot : ' font-medium');
     $isAdmin = auth()->check() && auth()->user()->isAdmin();
     $isRenter = auth()->check() && auth()->user()->isRenter();
@@ -74,7 +74,7 @@
 
 <main class="flex-1">
     @if (session('success'))
-        <div id="toast" class="pointer-events-none fixed inset-x-0 top-4 z-100 flex justify-center px-4">
+        <div id="toast" class="pointer-events-none fixed inset-x-0 top-20 z-100 flex justify-center px-4">
             <div role="status" class="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-black shadow-lg">
                 <p class="flex-1">{{ session('success') }}</p>
                 <button type="button" aria-label="Close message" onclick="document.getElementById('toast')?.remove()" class="-mr-1 text-lg leading-none text-neutral-500 hover:text-black">&times;</button>

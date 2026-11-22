@@ -101,6 +101,7 @@
                         <th>Renter</th>
                         <th>Vehicle</th>
                         <th class="text-right">Total</th>
+                        <th>Payment proof</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -117,6 +118,7 @@
                                 <div class="text-xs text-neutral-500">{{ $rental->vehicle->plate_number ?? 'No plate' }}</div>
                             </td>
                             <td class="text-right">Rp {{ number_format($rental->total_cost, 0, ',', '.') }}</td>
+                            <td><x-proof-links :rental="$rental" /></td>
                         </tr>
                     @endforeach
                 </tbody>

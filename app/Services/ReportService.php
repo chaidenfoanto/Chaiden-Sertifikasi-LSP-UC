@@ -38,7 +38,7 @@ class ReportService
             : ($isPeriodGroup ? now()->year : null);
         $month = (int) ($filters['month'] ?? now()->month);
 
-        $query = Rental::with(['user', 'vehicle', 'garage.type']);
+        $query = Rental::with(['user', 'vehicle', 'garage.type', 'extensions']);
 
         if ($year !== null) {
             $query->whereYear('start_date', $year);
